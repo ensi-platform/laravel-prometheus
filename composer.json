@@ -1,0 +1,27 @@
+{
+    "name": "madridianfox/laravel-prometheus",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Madridianfox\\LaravelPrometheus\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "require-dev": {
+        "laravel/framework": "^9"
+    },
+    "require": {
+        "php": ">=8",
+        "ext-apcu": "*",
+        "promphp/prometheus_client_php": "2.*",
+        "promphp/prometheus_push_gateway_php": "dev-main"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Madridianfox\\LaravelPrometheus\\PrometheusServiceProvider"
+            ]
+        }
+    }
+}
