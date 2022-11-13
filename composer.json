@@ -12,10 +12,8 @@
         "laravel/framework": "^9"
     },
     "require": {
-        "php": ">=8",
-        "ext-apcu": "*",
-        "promphp/prometheus_client_php": "2.*",
-        "promphp/prometheus_push_gateway_php": "dev-main"
+        "php": ">=8.1",
+        "promphp/prometheus_client_php": "2.*"
     },
     "extra": {
         "laravel": {
