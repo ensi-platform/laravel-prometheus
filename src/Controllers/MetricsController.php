@@ -13,6 +13,9 @@ class MetricsController
     public function __invoke(Request $request, PrometheusManager $prometheus)
     {
         $metricsBag = $this->getMetricsBagForPath($request, $prometheus);
+        if (!$metricsBag->auth($request)) {
+            abort(401, "Authentication required", ['WWW-Authenticate' => 'Basic']);
+        }
 
         return new Response($metricsBag->dumpTxt(), 200, ['Content-type' => RenderTextFormat::MIME_TYPE]);
     }

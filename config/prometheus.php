@@ -8,7 +8,7 @@ return [
     'bags' => [
         'default' => [
             'namespace' => env('PROMETHEUS_NAMESPACE', 'app'),
-            'route' => '/metrics',
+            'route' => 'metrics',
             'basic_auth' => [
                 'login' => env('PROMETHEUS_AUTH_LOGIN'),
                 'password' => env('PROMETHEUS_AUTH_PASSWORD'),
@@ -26,6 +26,6 @@ return [
             'label_providers' => [
                 \Madridianfox\LaravelPrometheus\AppNameLabelProvider::class,
             ]
-        ],
+        ]
     ],
 ];

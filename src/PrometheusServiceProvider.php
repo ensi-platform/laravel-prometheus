@@ -17,8 +17,7 @@ class PrometheusServiceProvider extends ServiceProvider
     public function boot()
     {
         foreach (config('prometheus.bags') as $bagConfig) {
-            Route::get($bagConfig['route'], MetricsController::class)
-                ->middleware('');
+            Route::get($bagConfig['route'], MetricsController::class);
         }
     }
 }

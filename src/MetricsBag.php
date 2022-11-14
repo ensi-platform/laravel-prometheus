@@ -2,6 +2,7 @@
 
 namespace Madridianfox\LaravelPrometheus;
 
+use Illuminate\Http\Request;
 use Prometheus\CollectorRegistry;
 use Prometheus\Counter;
 use Prometheus\RenderTextFormat;
@@ -116,5 +117,16 @@ class MetricsBag
     public function wipe(): void
     {
         $this->getCollectors()->wipeStorage();
+    }
+
+    public function auth(Request $request): bool
+    {
+        $authEnabled = isset($this->config['basic_auth']);
+        if (!$authEnabled) {
+            return true;
+        }
+
+        return $this->config['basic_auth']['login'] == $request->getUser()
+            && $this->config['basic_auth']['password'] == $request->getPassword();
     }
 }
