@@ -3,14 +3,19 @@
 namespace Madridianfox\LaravelPrometheus;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis as RedisManager;
+use InvalidArgumentException;
+use Madridianfox\LaravelPrometheus\Storage\Redis;
 use Prometheus\CollectorRegistry;
 use Prometheus\Counter;
+use Prometheus\Gauge;
+use Prometheus\Histogram;
 use Prometheus\RenderTextFormat;
 use Prometheus\Storage\Adapter;
 use Prometheus\Storage\APC;
 use Prometheus\Storage\APCng;
 use Prometheus\Storage\InMemory;
-use Prometheus\Storage\Redis;
+use Prometheus\Summary;
 
 class MetricsBag
 {
@@ -36,11 +41,43 @@ class MetricsBag
         ];
     }
 
-    private function getCounter(string $name): Counter
+    public function declareGauge(string $name, array $labels = []): void
+    {
+        $this->collectorDeclarations[$name] = [
+            'labels' => $labels,
+            'created' => false,
+        ];
+    }
+
+    public function declareHistogram(string $name, array $buckets, array $labels = []): void
+    {
+        $this->collectorDeclarations[$name] = [
+            'labels' => $labels,
+            'buckets' => $buckets,
+            'created' => false,
+        ];
+    }
+
+    public function declareSummary(string $name, int $maxAgeSeconds, array $quantiles, array $labels = []): void
+    {
+        $this->collectorDeclarations[$name] = [
+            'labels' => $labels,
+            'max_age_seconds' => $maxAgeSeconds,
+            'quantiles' => $quantiles,
+            'created' => false,
+        ];
+    }
+
+    private function checkMetricDeclared(string $name): void
     {
         if (!array_key_exists($name, $this->collectorDeclarations)) {
-            throw new \InvalidArgumentException('Undefined metric ' . $name);
+            throw new InvalidArgumentException('Undefined metric ' . $name);
         }
+    }
+
+    private function getCounter(string $name): Counter
+    {
+        $this->checkMetricDeclared($name);
 
         if (!$this->collectorDeclarations[$name]['created']) {
             $this->getCollectors()->registerCounter(
@@ -58,9 +95,96 @@ class MetricsBag
         );
     }
 
+    private function getGauge(string $name): Gauge
+    {
+        $this->checkMetricDeclared($name);
+
+        if (!$this->collectorDeclarations[$name]['created']) {
+            $this->getCollectors()->registerGauge(
+                $this->config['namespace'],
+                $name,
+                "",
+                $this->enrichLabelNames($this->collectorDeclarations[$name]['labels']),
+            );
+            $this->collectorDeclarations[$name]['created'] = true;
+        }
+
+        return $this->getCollectors()->getGauge(
+            $this->config['namespace'],
+            $name,
+        );
+    }
+
+    private function getHistogram($name): Histogram
+    {
+        $this->checkMetricDeclared($name);
+
+        if (!$this->collectorDeclarations[$name]['created']) {
+            $this->getCollectors()->registerHistogram(
+                $this->config['namespace'],
+                $name,
+                "",
+                $this->enrichLabelNames($this->collectorDeclarations[$name]['labels']),
+                $this->collectorDeclarations[$name]['buckets']
+            );
+            $this->collectorDeclarations[$name]['created'] = true;
+        }
+
+        return $this->getCollectors()->getHistogram(
+            $this->config['namespace'],
+            $name,
+        );
+    }
+
+    private function getSummary(string $name): Summary
+    {
+        $this->checkMetricDeclared($name);
+
+        if (!$this->collectorDeclarations[$name]['created']) {
+            $this->getCollectors()->registerSummary(
+                $this->config['namespace'],
+                $name,
+                "",
+                $this->enrichLabelNames($this->collectorDeclarations[$name]['labels']),
+                $this->collectorDeclarations[$name]['max_age_seconds'],
+                $this->collectorDeclarations[$name]['quantiles'],
+            );
+            $this->collectorDeclarations[$name]['created'] = true;
+        }
+
+        return $this->getCollectors()->getSummary(
+            $this->config['namespace'],
+            $name,
+        );
+    }
+
     public function updateCounter(string $name, array $labelValues, $value = 1): void
     {
         $this->getCounter($name)->incBy(
+            $value,
+            $this->enrichLabelValues($labelValues)
+        );
+    }
+
+    public function updateGauge(string $name, array $labelValues, $value = 1): void
+    {
+        $this->getGauge($name)->incBy(
+            $value,
+            $this->enrichLabelValues($labelValues)
+        );
+    }
+
+    public function updateHistogram(string $name, array $labelValues, $value = 1): void
+    {
+        $this->getHistogram($name)->observe(
+            $value,
+            $this->enrichLabelValues($labelValues)
+        );
+    }
+
+    public function updateSummary(string $name, array $labelValues, $value = 1): void
+    {
+        $this->getSummary($name)->observe(
             $value,
             $this->enrichLabelValues($labelValues)
         );
@@ -79,7 +203,7 @@ class MetricsBag
                 $labels[] = $additionalLabel;
             }
         }
-        logger()->debug('labels', $labels);
+
         return $labels;
     }
 
@@ -91,7 +215,6 @@ class MetricsBag
             }
         }
 
-        logger()->debug('values', $labelValues);
         return $labelValues;
     }
 
@@ -106,12 +229,28 @@ class MetricsBag
 
     private function getStorage(): Adapter
     {
-        return match($this->config['storage']) {
-            'redis' => new Redis($this->config['redis']),
-            'apcu' => new APC($this->config['apcu_prefix']),
-            'apcu_ng' => new APCng($this->config['apcu_prefix']),
-            'memory' => new InMemory(),
-        };
+        switch (true) {
+            case array_key_exists('connection', $this->config):
+                return $this->createStorageFromConnection($this->config['connection']);
+            case array_key_exists('redis', $this->config):
+                return new Redis($this->config['redis']);
+            case array_key_exists('apcu', $this->config):
+                return new APC($this->config['apcu']['prefix']);
+            case array_key_exists('apcu-ng', $this->config):
+                return new APCng($this->config['apcu-ng']['prefix']);
+            case array_key_exists('memory', $this->config):
+                return new InMemory();
+        }
+        throw new InvalidArgumentException("Missing storage configuration");
+    }
+
+    private function createStorageFromConnection(array $options): Adapter
+    {
+        $redisConnection = RedisManager::connection($options['connection']);
+
+        return Redis::fromExistingConnection($redisConnection->client(), [
+            'bag' => $options['bag'],
+        ]);
     }
 
     public function wipe(): void

@@ -47,10 +47,6 @@ class PrometheusManager
 
     private function defaultBagName(?string $context = null): ?string
     {
-        logger()->debug('defaults', [
-            'config' => config('prometheus'),
-            'runtime' => $this->defaults
-        ]);
         $defaults = array_merge(config('prometheus.defaults'), $this->defaults);
 
         return $defaults[$context ?? $this->currentContext];
