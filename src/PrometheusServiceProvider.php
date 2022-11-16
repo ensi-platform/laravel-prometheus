@@ -16,6 +16,12 @@ class PrometheusServiceProvider extends ServiceProvider
 
     public function boot()
     {
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/../config/prometheus.php' => config_path('prometheus.php'),
+            ], 'prometheus-config');
+        }
+
         foreach (config('prometheus.bags') as $bagConfig) {
             Route::get($bagConfig['route'], MetricsController::class);
         }
