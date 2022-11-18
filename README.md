@@ -11,7 +11,7 @@
 composer require madridianfox/laravel-prometheus
 ```
 
-Скопируйте конфигурация для дальнейшей настройки
+Скопируйте конфигурацию для дальнейшей настройки
 ```bash
 php artisan vendor:publish --tag=prometheus-config
 ```
@@ -108,14 +108,12 @@ Laravel Redis соединение из `config/databases.php`. Под капо�
 ```php
 # app/Providers/AppServiceProvider.php
 public function boot() {
-    $prometheus = resolve(PrometheusManager::class);
-    
     // создаём метрики в default bag
-    $prometheus->declareCounter('http_requests_count', ['endpoint', 'code']);
-    $prometheus->declareSummary('http_requests_duration_seconds', 60, [0.5, 0.95, 0.99]);
+    Prometheus::declareCounter('http_requests_count', ['endpoint', 'code']);
+    Prometheus::declareSummary('http_requests_duration_seconds', 60, [0.5, 0.95, 0.99]);
     
     // создаём метрики в конкретном bag
-    $prometheus->bag('business')->declareCounter('orders_count', ['delivery_type', 'payment_method'])
+    Prometheus::bag('business')->declareCounter('orders_count', ['delivery_type', 'payment_method'])
     
 }
 ```
@@ -128,8 +126,8 @@ public function handle($request, Closure $next, ...$guards)
     $response = $next($request);
     $endTime = microtime(true);
     
-    $this->prometheus->updateCounter('http_requests_count', [Route::current()?->uri, $response->status()]);
-    $this->prometheus->updateSummary('http_requests_duration_seconds', [], $endTime - $startTime);
+    Prometheus::updateCounter('http_requests_count', [Route::current()?->uri, $response->status()]);
+    Prometheus::updateSummary('http_requests_duration_seconds', [], $endTime - $startTime);
     
     return $response;
 }
@@ -137,7 +135,7 @@ public function handle($request, Closure $next, ...$guards)
 # app/Actions/CreateOrder.php
 public function execute(Order $order) {
     // ...
-    $this->prometheus->bag('business')->updateCounter('orders_count', [$order->delivery_type, $order->payment_method]);
+    Prometheus::bag('business')->updateCounter('orders_count', [$order->delivery_type, $order->payment_method]);
 }
 ```
 
@@ -179,9 +177,9 @@ return [
 ```
 Далее как обычно работаем с метриками.
 ```php
-$prometheus->declareCounter('http_requests_count', ['endpoint', 'code']);
+Prometheus::declareCounter('http_requests_count', ['endpoint', 'code']);
 // ...
-$this->prometheus->updateCounter('http_requests_count', [Route::current()?->uri, $response->status()]);
+Prometheus::updateCounter('http_requests_count', [Route::current()?->uri, $response->status()]);
 ```
 В результате метрика будет иметь не два, а три лейбла
 ```

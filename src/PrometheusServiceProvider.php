@@ -11,6 +11,8 @@ class PrometheusServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->singleton(PrometheusManager::class);
+        $this->app->alias(PrometheusManager::class, 'prometheus');
+
         $this->mergeConfigFrom(__DIR__.'/../config/prometheus.php', 'prometheus');
     }
 
