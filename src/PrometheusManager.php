@@ -52,7 +52,7 @@ class PrometheusManager
         return $defaults[$context ?? $this->currentContext];
     }
 
-    private function createMetricsBag(string $bagName): MetricsBag
+    protected function createMetricsBag(string $bagName): MetricsBag
     {
         $config = config("prometheus.bags." . $bagName);
         if (!$config) {
@@ -61,15 +61,7 @@ class PrometheusManager
             );
         }
 
-        $metricsBag = new MetricsBag($config);
-        foreach ($config['label_providers'] as $index => $value) {
-            if (is_numeric($index)) {
-                $metricsBag->addLabelProcessor(labelProcessorClass: $value);
-            } else {
-                $metricsBag->addLabelProcessor(labelProcessorClass: $index, parameters: $value);
-            }
-        }
-        return $metricsBag;
+        return new MetricsBag($config);
     }
 
     public function __call($method, $parameters)

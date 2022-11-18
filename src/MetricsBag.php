@@ -26,6 +26,13 @@ class MetricsBag
 
     public function __construct(private array $config)
     {
+        foreach ($config['label_providers'] ?? [] as $index => $value) {
+            if (is_numeric($index)) {
+                $this->addLabelProcessor(labelProcessorClass: $value);
+            } else {
+                $this->addLabelProcessor(labelProcessorClass: $index, parameters: $value);
+            }
+        }
     }
 
     public function addLabelProcessor(string $labelProcessorClass, array $parameters = [])
@@ -168,7 +175,7 @@ class MetricsBag
 
     public function updateGauge(string $name, array $labelValues, $value = 1): void
     {
-        $this->getGauge($name)->incBy(
+        $this->getGauge($name)->set(
             $value,
             $this->enrichLabelValues($labelValues)
         );

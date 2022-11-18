@@ -7,9 +7,16 @@
             "Madridianfox\\LaravelPrometheus\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Madridianfox\\LaravelPrometheus\\Tests\\": "tests/"
+        }
+    },
     "minimum-stability": "dev",
     "require-dev": {
-        "laravel/framework": "^9"
+        "laravel/framework": "^9",
+        "orchestra/testbench": "^7",
+        "phpunit/phpunit": "^9"
     },
     "require": {
         "php": ">=8.1",

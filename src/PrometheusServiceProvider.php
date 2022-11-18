@@ -22,8 +22,8 @@ class PrometheusServiceProvider extends ServiceProvider
             ], 'prometheus-config');
         }
 
-        foreach (config('prometheus.bags') as $bagConfig) {
-            Route::get($bagConfig['route'], MetricsController::class);
+        foreach (config('prometheus.bags') as $bagName => $bagConfig) {
+            Route::get($bagConfig['route'], MetricsController::class)->name("prometheus.{$bagName}");
         }
     }
 }
