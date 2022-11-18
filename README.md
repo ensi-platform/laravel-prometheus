@@ -75,7 +75,7 @@ redis connection'a из файла `config/databases.php`.
     'prefix' => 'metrics'
 ]
 ```
-или альтернативный адаптер APCUng
+или альтернативный адаптер APCuNG
 ```php
 'apcu-ng' => [
     'prefix' => 'metrics'
@@ -102,3 +102,91 @@ Laravel Redis соединение из `config/databases.php`. Под капо�
     'bag' => 'default',
 ]
 ```
+## Usage
+
+Определяем метрики. На данном этапе вы можете указать имя метрики, набор ключевых лейблов и специфичные для метрики параметры, вроде histogram buckets.
+```php
+# app/Providers/AppServiceProvider.php
+public function boot() {
+    $prometheus = resolve(PrometheusManager::class);
+    
+    // создаём метрики в default bag
+    $prometheus->declareCounter('http_requests_count', ['endpoint', 'code']);
+    $prometheus->declareSummary('http_requests_duration_seconds', 60, [0.5, 0.95, 0.99]);
+    
+    // создаём метрики в конкретном bag
+    $prometheus->bag('business')->declareCounter('orders_count', ['delivery_type', 'payment_method'])
+    
+}
+```
+Далее в коде приложения обновляем счётчики.
+```php
+# app/Http/Middleware/Telemetry.php
+public function handle($request, Closure $next, ...$guards)
+{
+    $startTime = microtime(true);
+    $response = $next($request);
+    $endTime = microtime(true);
+    
+    $this->prometheus->updateCounter('http_requests_count', [Route::current()?->uri, $response->status()]);
+    $this->prometheus->updateSummary('http_requests_duration_seconds', [], $endTime - $startTime);
+    
+    return $response;
+}
+
+# app/Actions/CreateOrder.php
+public function execute(Order $order) {
+    // ...
+    $this->prometheus->bag('business')->updateCounter('orders_count', [$order->delivery_type, $order->payment_method]);
+}
+```
+
+**Label Providers**
+
+Вы можете добавить лейбл ко всем метрикам bag'a указав в его конфигурации т.н. Label providers. Label provider - это middleware,
+который срабатывает в момент определения метрики и в момент обновления её счётчика, добавляя в первом случае на название лейбла, 
+а во втором значение.  
+
+Например у намс есть TenantLabelProvider
+```php
+class TenantLabelProvider implements LabelProvider
+{
+    public function labels(): array
+    {
+        return ['tenant'];
+    }
+
+    public function values(): array
+    {
+        return [Tenant::curent()->id];
+    }
+}
+```
+Регистрируем его в конфигурации bag'a.
+```php
+# config/prometheus.php
+return [
+    // ...
+    'bags' => [
+        'default' => [
+            // ...
+            'label_providers' => [
+                \App\System\TenantLabelProvider::class,
+            ]
+        ],
+    ],
+];
+```
+Далее как обычно работаем с метриками.
+```php
+$prometheus->declareCounter('http_requests_count', ['endpoint', 'code']);
+// ...
+$this->prometheus->updateCounter('http_requests_count', [Route::current()?->uri, $response->status()]);
+```
+В результате метрика будет иметь не два, а три лейбла
+```
+app_http_requests_count{endpoint="catalog/products",code="200",tenant="JBZ-987-H6"} 987
+```
+
+## License
+Laravel Prometheus is open-sourced software licensed under the [MIT license](LICENSE.md).
