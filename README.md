@@ -1,5 +1,7 @@
 # Prometheus client for laravel
 
+[![tests](https://github.com/MadridianFox/laravel-prometheus/actions/workflows/tests.yml/badge.svg)](https://github.com/MadridianFox/laravel-prometheus/actions/workflows/tests.yml)
+
 Адаптер для [promphp/prometheus_client_php](https://github.com/PromPHP/prometheus_client_php)
 
 ## Installation
