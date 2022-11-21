@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis as RedisManager;
 use InvalidArgumentException;
 use Madridianfox\LaravelPrometheus\LabelMiddlewares\LabelMiddleware;
+use Madridianfox\LaravelPrometheus\OnDemandMetrics\OnDemandMetric;
 use Madridianfox\LaravelPrometheus\Storage\Redis;
 use Prometheus\CollectorRegistry;
 use Prometheus\Counter;
@@ -24,6 +25,7 @@ class MetricsBag
     /** @var array<LabelMiddleware> */
     private array $labelMiddlewares = [];
     private array $collectorDeclarations = [];
+    private array $onDemandMetrics = [];
 
     public function __construct(private array $config)
     {
@@ -196,6 +198,25 @@ class MetricsBag
             $value,
             $this->enrichLabelValues($labelValues)
         );
+    }
+
+    public function processOnDemandMetrics(): void
+    {
+        foreach ($this->config['on_demand_metrics'] ?? [] as $onDemandMetricClass) {
+            $onDemandMetric = $this->getOnDemandMetric($onDemandMetricClass);
+            $onDemandMetric->update($this);
+        }
+    }
+
+    private function getOnDemandMetric(string $onDemandMetricClass): OnDemandMetric
+    {
+        if (!isset($this->onDemandMetrics[$onDemandMetricClass])) {
+            $onDemandMetric = resolve($onDemandMetricClass);
+            $onDemandMetric->register($this);
+            $this->onDemandMetrics[$onDemandMetricClass] = $onDemandMetric;
+        }
+
+        return $this->onDemandMetrics[$onDemandMetricClass];
     }
 
     public function dumpTxt(): string

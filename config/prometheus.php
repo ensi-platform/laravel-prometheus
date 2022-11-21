@@ -16,7 +16,10 @@ return [
             ],
             'label_middlewares' => [
                 \Madridianfox\LaravelPrometheus\LabelMiddlewares\AppNameLabelMiddleware::class,
-            ]
+            ],
+            'on_demand_metrics' => [
+                \Madridianfox\LaravelPrometheus\OnDemandMetrics\MemoryUsageOnDemandMetric::class,
+            ],
         ],
     ],
 ];

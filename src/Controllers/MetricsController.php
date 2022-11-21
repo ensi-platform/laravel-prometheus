@@ -17,6 +17,8 @@ class MetricsController
             abort(401, "Authentication required", ['WWW-Authenticate' => 'Basic']);
         }
 
+        $metricsBag->processOnDemandMetrics();
+
         return new Response($metricsBag->dumpTxt(), 200, ['Content-type' => RenderTextFormat::MIME_TYPE]);
     }
 
