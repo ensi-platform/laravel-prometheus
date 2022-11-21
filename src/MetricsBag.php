@@ -5,6 +5,7 @@ namespace Madridianfox\LaravelPrometheus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis as RedisManager;
 use InvalidArgumentException;
+use Madridianfox\LaravelPrometheus\LabelMiddlewares\LabelMiddleware;
 use Madridianfox\LaravelPrometheus\Storage\Redis;
 use Prometheus\CollectorRegistry;
 use Prometheus\Counter;
@@ -20,24 +21,24 @@ use Prometheus\Summary;
 class MetricsBag
 {
     private ?CollectorRegistry $collectors = null;
-    /** @var array<LabelProvider> */
-    private array $labelProcessors = [];
+    /** @var array<LabelMiddleware> */
+    private array $labelMiddlewares = [];
     private array $collectorDeclarations = [];
 
     public function __construct(private array $config)
     {
-        foreach ($config['label_providers'] ?? [] as $index => $value) {
+        foreach ($config['label_middlewares'] ?? [] as $index => $value) {
             if (is_numeric($index)) {
-                $this->addLabelProcessor(labelProcessorClass: $value);
+                $this->addLabelMiddleware(labelProcessorClass: $value);
             } else {
-                $this->addLabelProcessor(labelProcessorClass: $index, parameters: $value);
+                $this->addLabelMiddleware(labelProcessorClass: $index, parameters: $value);
             }
         }
     }
 
-    public function addLabelProcessor(string $labelProcessorClass, array $parameters = [])
+    public function addLabelMiddleware(string $labelProcessorClass, array $parameters = [])
     {
-        $this->labelProcessors[] = resolve($labelProcessorClass, $parameters);
+        $this->labelMiddlewares[] = resolve($labelProcessorClass, $parameters);
     }
 
     public function declareCounter(string $name, array $labels = []): void
@@ -205,7 +206,7 @@ class MetricsBag
 
     private function enrichLabelNames(array $labels): array
     {
-        foreach ($this->labelProcessors as $labelProcessor) {
+        foreach ($this->labelMiddlewares as $labelProcessor) {
             foreach ($labelProcessor->labels() as $additionalLabel) {
                 $labels[] = $additionalLabel;
             }
@@ -216,7 +217,7 @@ class MetricsBag
 
     private function enrichLabelValues(array $labelValues): array
     {
-        foreach ($this->labelProcessors as $labelProcessor) {
+        foreach ($this->labelMiddlewares as $labelProcessor) {
             foreach ($labelProcessor->values() as $additionalValue) {
                 $labelValues[] = $additionalValue;
             }

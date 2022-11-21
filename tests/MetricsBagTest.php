@@ -3,7 +3,7 @@
 namespace Madridianfox\LaravelPrometheus\Tests;
 
 use Illuminate\Http\Request;
-use Madridianfox\LaravelPrometheus\AppNameLabelProvider;
+use Madridianfox\LaravelPrometheus\LabelMiddlewares\AppNameLabelMiddleware;
 use Madridianfox\LaravelPrometheus\MetricsBag;
 
 class MetricsBagTest extends TestCase
@@ -150,15 +150,15 @@ class MetricsBagTest extends TestCase
         ]);
     }
 
-    public function testLabelProcessor()
+    public function testLabelMiddleware()
     {
         config(['app.name' => 'app-name']);
 
         $bag = new MetricsBag([
             'namespace' => 'test',
             'memory' => true,
-            'label_providers' => [
-                AppNameLabelProvider::class,
+            'label_middlewares' => [
+                AppNameLabelMiddleware::class,
             ]
         ]);
 

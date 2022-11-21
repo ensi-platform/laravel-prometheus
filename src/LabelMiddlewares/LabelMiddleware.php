@@ -1,8 +1,8 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus;
+namespace Madridianfox\LaravelPrometheus\LabelMiddlewares;
 
-interface LabelProvider
+interface LabelMiddleware
 {
     public function labels(): array;
     public function values(): array;

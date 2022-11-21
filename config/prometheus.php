@@ -1,9 +1,7 @@
 <?php
 
 return [
-    'defaults' => [
-        'web' => 'default',
-    ],
+    'default_bag' => 'default',
     'bags' => [
         'default' => [
             'namespace' => env('PROMETHEUS_NAMESPACE', 'app'),
@@ -16,8 +14,8 @@ return [
                 'connection' => 'default',
                 'bag' => 'default',
             ],
-            'label_providers' => [
-                \Madridianfox\LaravelPrometheus\AppNameLabelProvider::class,
+            'label_middlewares' => [
+                \Madridianfox\LaravelPrometheus\LabelMiddlewares\AppNameLabelMiddleware::class,
             ]
         ],
     ],

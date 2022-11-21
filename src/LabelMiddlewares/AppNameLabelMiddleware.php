@@ -1,8 +1,10 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus;
+namespace Madridianfox\LaravelPrometheus\LabelMiddlewares;
 
-class AppNameLabelProvider implements LabelProvider
+use function config;
+
+class AppNameLabelMiddleware implements LabelMiddleware
 {
     public function labels(): array
     {

@@ -6,9 +6,7 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static MetricsBag bag(?string $name = null)
- * @method static MetricsBag defaultBag(?string $context = null)
- * @method static void setDefaultBag(string $context, string $bagName)
- * @method static void setCurrentContext(string $context)
+ * @method static void setDefaultBag(string $bagName)
  *
  * @method static void addLabelProcessor(string $labelProcessorClass, array $parameters = [])
  * @method static void declareCounter(string $name, array $labels = [])

@@ -44,36 +44,11 @@ class PrometheusManagerTest extends TestCase
         $this->assertSame($firstBag, $secondBag);
     }
 
-    public function testDifferentDefaultBagsForDifferentContexts()
-    {
-        config([
-            'prometheus' => [
-                'defaults' => [
-                    'one' => 'first',
-                    'two' => 'second',
-                ],
-                'bags' => [
-                    'first' => [1],
-                    'second' => [1],
-                ]
-            ]
-        ]);
-        /** @var PrometheusManager $manager */
-        $manager = resolve(PrometheusManager::class);
-
-        $firstBag = $manager->defaultBag('one');
-        $secondBag = $manager->defaultBag('two');
-
-        $this->assertNotSame($firstBag, $secondBag);
-    }
-
     public function testSetDefaultBag()
     {
         config([
             'prometheus' => [
-                'defaults' => [
-                    'one' => 'first',
-                ],
+                'default_bag' => 'first',
                 'bags' => [
                     'first' => [1],
                     'second' => [1],
@@ -83,34 +58,9 @@ class PrometheusManagerTest extends TestCase
         /** @var PrometheusManager $manager */
         $manager = resolve(PrometheusManager::class);
 
-        $firstBag = $manager->defaultBag('one');
-        $manager->setDefaultBag('one', 'second');
-        $secondBag = $manager->defaultBag('one');
-
-        $this->assertNotSame($firstBag, $secondBag);
-    }
-
-    public function testSetContext()
-    {
-        config([
-            'prometheus' => [
-                'defaults' => [
-                    'one' => 'first',
-                    'two' => 'second',
-                ],
-                'bags' => [
-                    'first' => [1],
-                    'second' => [1],
-                ]
-            ]
-        ]);
-        /** @var PrometheusManager $manager */
-        $manager = resolve(PrometheusManager::class);
-
-        $manager->setCurrentContext('one');
-        $firstBag = $manager->defaultBag();
-        $manager->setCurrentContext('two');
-        $secondBag = $manager->defaultBag();
+        $firstBag = $manager->bag();
+        $manager->setDefaultBag('second');
+        $secondBag = $manager->bag();
 
         $this->assertNotSame($firstBag, $secondBag);
     }

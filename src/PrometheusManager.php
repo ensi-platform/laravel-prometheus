@@ -10,8 +10,7 @@ use InvalidArgumentException;
 class PrometheusManager
 {
     private array $metricBags = [];
-    private array $defaults = [];
-    private string $currentContext = 'web';
+    private ?string $defaultBagName = null;
 
     public function bag(?string $name = null): MetricsBag
     {
@@ -30,26 +29,14 @@ class PrometheusManager
         return $this->metricBags[$bagName];
     }
 
-    public function defaultBag(?string $context = null): MetricsBag
+    public function setDefaultBag(string $bagName): void
     {
-        return $this->bag($this->defaultBagName($context));
+        $this->defaultBagName = $bagName;
     }
 
-    public function setDefaultBag(string $context, string $bagName): void
+    private function defaultBagName(): ?string
     {
-        $this->defaults[$context] = $bagName;
-    }
-
-    public function setCurrentContext(string $context): void
-    {
-        $this->currentContext = $context;
-    }
-
-    private function defaultBagName(?string $context = null): ?string
-    {
-        $defaults = array_merge(config('prometheus.defaults'), $this->defaults);
-
-        return $defaults[$context ?? $this->currentContext];
+        return $this->defaultBagName ??= config('prometheus.default_bag');
     }
 
     protected function createMetricsBag(string $bagName): MetricsBag

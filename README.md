@@ -16,6 +16,32 @@ composer require madridianfox/laravel-prometheus
 php artisan vendor:publish --tag=prometheus-config
 ```
 
+## Usage
+
+Перед тем как накручивать счётчики метрик, их надо зарегистрировать. Лучше всего это делать в методе boot() в AppServiceProvider.
+```php
+# app/Providers/AppServiceProvider.php
+public function boot() {
+    Prometheus::declareCounter('http_requests_count', ['endpoint', 'code']);
+    Prometheus::declareSummary('http_requests_duration_seconds', 60, [0.5, 0.95, 0.99]);
+}
+```
+Обновить значение счётчика так же просто
+```php
+# app/Http/Middleware/Telemetry.php
+public function handle($request, Closure $next)
+{
+    $startTime = microtime(true);
+    $response = $next($request);
+    $endTime = microtime(true);
+    
+    Prometheus::updateCounter('http_requests_count', [Route::current()?->uri, $response->status()]);
+    Prometheus::updateSummary('http_requests_duration_seconds', [], $endTime - $startTime);
+    
+    return $response;
+}
+```
+
 ## Configuration
 
 Структура файла конфигурации
@@ -23,9 +49,7 @@ php artisan vendor:publish --tag=prometheus-config
 ```php
 # config/prometheus.php
 return [
-    'defaults' => [
-        '<context>' => '<bag-name>',
-    ],
+    'default_bag' => '<bag-name>',
     'bags' => [
         '<bag-name>' => [
             'namespace' => '<prometheus-namespace>',
@@ -37,7 +61,7 @@ return [
             '<storage-type>' => [
                 '<connection-parameters>'
             ],
-            'label_providers' => [
+            'label_middlewares' => [
                 '<middlewares>'
             ]
         ],
@@ -51,13 +75,6 @@ return [
 и второй для бизнес-значений вроде количества заказов или показов определённой страницы.
 Для этого вводится понятие bag. 
 Вы можете настроить несколько бэгов, указав для каждого своё хранилище данных, отдельный эндпоинт для сбора метрик и т.д.
-
-**Context**
-
-Имея несколько бэгов, вы можете получить один по имени, а можете запростить дефолтный бэг.
-По аналогии с разделением метрик на отдельные бэги, можно разделить процессы вашего приложения на разные контексты.
-Например по отдельности собирать метрики web-приложения и метрики cron команд.
-Задав на старте процесса конкретный контекст, вы можете получить для него дефолтный бэг. 
 
 **Storage type**
 
@@ -102,34 +119,13 @@ Laravel Redis соединение из `config/databases.php`. Под капо�
     'bag' => 'default',
 ]
 ```
-## Usage
-
-Определяем метрики. На данном этапе вы можете указать имя метрики, набор ключевых лейблов и специфичные для метрики параметры, вроде histogram buckets.
+## Advanced Usage
+Выбрать другой bag для создания и обновления в нём метрик можно через метод `bag($bagName)`.
 ```php
 # app/Providers/AppServiceProvider.php
 public function boot() {
-    // создаём метрики в default bag
-    Prometheus::declareCounter('http_requests_count', ['endpoint', 'code']);
-    Prometheus::declareSummary('http_requests_duration_seconds', 60, [0.5, 0.95, 0.99]);
-    
     // создаём метрики в конкретном bag
     Prometheus::bag('business')->declareCounter('orders_count', ['delivery_type', 'payment_method'])
-    
-}
-```
-Далее в коде приложения обновляем счётчики.
-```php
-# app/Http/Middleware/Telemetry.php
-public function handle($request, Closure $next, ...$guards)
-{
-    $startTime = microtime(true);
-    $response = $next($request);
-    $endTime = microtime(true);
-    
-    Prometheus::updateCounter('http_requests_count', [Route::current()?->uri, $response->status()]);
-    Prometheus::updateSummary('http_requests_duration_seconds', [], $endTime - $startTime);
-    
-    return $response;
 }
 
 # app/Actions/CreateOrder.php
@@ -139,15 +135,15 @@ public function execute(Order $order) {
 }
 ```
 
-**Label Providers**
+**Label Middlewares**
 
-Вы можете добавить лейбл ко всем метрикам bag'a указав в его конфигурации т.н. Label providers. Label provider - это middleware,
-который срабатывает в момент определения метрики и в момент обновления её счётчика, добавляя в первом случае на название лейбла, 
+Вы можете добавить лейбл ко всем метрикам bag'a указав в его конфигурации т.н. Label middleware. Label middleware 
+срабатывает в момент определения метрики и в момент обновления её счётчика, добавляя в первом случае на название лейбла, 
 а во втором значение.  
 
 Например у намс есть TenantLabelProvider
 ```php
-class TenantLabelProvider implements LabelProvider
+class TenantLabelMiddleware implements LabelMiddleware
 {
     public function labels(): array
     {
@@ -168,8 +164,8 @@ return [
     'bags' => [
         'default' => [
             // ...
-            'label_providers' => [
-                \App\System\TenantLabelProvider::class,
+            'label_middlewares' => [
+                \App\System\TenantLabelMiddleware::class,
             ]
         ],
     ],
