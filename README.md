@@ -22,8 +22,8 @@ php artisan vendor:publish --tag=prometheus-config
 ```php
 # app/Providers/AppServiceProvider.php
 public function boot() {
-    Prometheus::declareCounter('http_requests_count', ['endpoint', 'code']);
-    Prometheus::declareSummary('http_requests_duration_seconds', 60, [0.5, 0.95, 0.99]);
+    Prometheus::counter('http_requests_count')->labels(['endpoint', 'code']);
+    Prometheus::summary('http_requests_duration_seconds', 60, [0.5, 0.95, 0.99]);
 }
 ```
 Обновить значение счётчика так же просто
@@ -35,8 +35,8 @@ public function handle($request, Closure $next)
     $response = $next($request);
     $endTime = microtime(true);
     
-    Prometheus::updateCounter('http_requests_count', [Route::current()?->uri, $response->status()]);
-    Prometheus::updateSummary('http_requests_duration_seconds', [], $endTime - $startTime);
+    Prometheus::update('http_requests_count', 1, [Route::current()?->uri, $response->status()]);
+    Prometheus::update('http_requests_duration_seconds', $endTime - $startTime);
     
     return $response;
 }
@@ -62,8 +62,11 @@ return [
                 '<connection-parameters>'
             ],
             'label_middlewares' => [
-                '<middlewares>'
-            ]
+                '<middleware-class>'
+            ],
+            'on_demand_metrics' => [
+                '<on-demand-metric-class>'
+            ]  
         ],
     ],
 ];
@@ -125,17 +128,17 @@ Laravel Redis соединение из `config/databases.php`. Под капо�
 # app/Providers/AppServiceProvider.php
 public function boot() {
     // создаём метрики в конкретном bag
-    Prometheus::bag('business')->declareCounter('orders_count', ['delivery_type', 'payment_method'])
+    Prometheus::bag('business')->counter('orders_count')->labels(['delivery_type', 'payment_method'])
 }
 
 # app/Actions/CreateOrder.php
 public function execute(Order $order) {
     // ...
-    Prometheus::bag('business')->updateCounter('orders_count', [$order->delivery_type, $order->payment_method]);
+    Prometheus::bag('business')->update('orders_count', 1, [$order->delivery_type, $order->payment_method]);
 }
 ```
 
-**Label Middlewares**
+### Label Middlewares
 
 Вы можете добавить лейбл ко всем метрикам bag'a указав в его конфигурации т.н. Label middleware. Label middleware 
 срабатывает в момент определения метрики и в момент обновления её счётчика, добавляя в первом случае на название лейбла, 
@@ -173,14 +176,35 @@ return [
 ```
 Далее как обычно работаем с метриками.
 ```php
-Prometheus::declareCounter('http_requests_count', ['endpoint', 'code']);
+Prometheus::counter('http_requests_count')->labels(['endpoint', 'code']);
 // ...
-Prometheus::updateCounter('http_requests_count', [Route::current()?->uri, $response->status()]);
+Prometheus::update('http_requests_count', 1, [Route::current()?->uri, $response->status()]);
 ```
 В результате метрика будет иметь не два, а три лейбла
 ```
 app_http_requests_count{endpoint="catalog/products",code="200",tenant="JBZ-987-H6"} 987
 ```
+
+### On demand metrics
+
+Иногда метрики не привязаны к событиям приложения. Обычно это метрики типа gauge, которые нет смысла обновлять на каждом входящем запросе,
+т.к. прометеус всё-равно заберёт только последнее установленное значение.
+Такие метрики можно рассчитывать в момент сбора метрик прометеусом.
+Для этого вам нужно создать т.н. on demand метрику. Это класс, в котором вы регистрируете метрики и устанавливаете в них значения.
+```php
+class QueueLengthOnDemandMetric extends OnDemandMetric {
+    public function register(MetricsBag $metricsBag): void
+    {
+        $metricsBag->gauge('queue_length');
+    }
+
+    public function update(MetricsBag $metricsBag): void
+    {
+        $metricsBag->update('queue_length', Queue::size());
+    }
+}
+```
+Обновление таких метрик происходит в момент обращения прометеуса к эндпоинту получения метрик.
 
 ## License
 Laravel Prometheus is open-sourced software licensed under the [MIT license](LICENSE.md).
