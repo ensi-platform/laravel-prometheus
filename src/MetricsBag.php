@@ -6,198 +6,88 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis as RedisManager;
 use InvalidArgumentException;
 use Madridianfox\LaravelPrometheus\LabelMiddlewares\LabelMiddleware;
+use Madridianfox\LaravelPrometheus\Metrics\AbstractMetric;
+use Madridianfox\LaravelPrometheus\Metrics\Counter;
+use Madridianfox\LaravelPrometheus\Metrics\Gauge;
+use Madridianfox\LaravelPrometheus\Metrics\Histogram;
+use Madridianfox\LaravelPrometheus\Metrics\Summary;
 use Madridianfox\LaravelPrometheus\OnDemandMetrics\OnDemandMetric;
 use Madridianfox\LaravelPrometheus\Storage\Redis;
 use Prometheus\CollectorRegistry;
-use Prometheus\Counter;
-use Prometheus\Gauge;
-use Prometheus\Histogram;
 use Prometheus\RenderTextFormat;
 use Prometheus\Storage\Adapter;
 use Prometheus\Storage\APC;
 use Prometheus\Storage\APCng;
 use Prometheus\Storage\InMemory;
-use Prometheus\Summary;
 
 class MetricsBag
 {
     private ?CollectorRegistry $collectors = null;
     /** @var array<LabelMiddleware> */
-    private array $labelMiddlewares = [];
-    private array $collectorDeclarations = [];
+    private array $middlewares = [];
+    /** @var array<AbstractMetric> */
+    private array $metrics = [];
+    /** @var array<class-string> */
     private array $onDemandMetrics = [];
 
     public function __construct(private array $config)
     {
         foreach ($config['label_middlewares'] ?? [] as $index => $value) {
             if (is_numeric($index)) {
-                $this->addLabelMiddleware(labelProcessorClass: $value);
+                $this->addMiddleware(labelProcessorClass: $value);
             } else {
-                $this->addLabelMiddleware(labelProcessorClass: $index, parameters: $value);
+                $this->addMiddleware(labelProcessorClass: $index, parameters: $value);
             }
         }
     }
 
-    public function addLabelMiddleware(string $labelProcessorClass, array $parameters = [])
+    public function getNamespace(): string
     {
-        $this->labelMiddlewares[] = resolve($labelProcessorClass, $parameters);
+        return $this->config['namespace'];
     }
 
-    public function declareCounter(string $name, array $labels = []): void
+    public function getMiddlewares(): array
     {
-        $this->collectorDeclarations[$name] = [
-            'labels' => $labels,
-            'created' => false,
-        ];
+        return $this->middlewares;
     }
 
-    public function declareGauge(string $name, array $labels = []): void
+    public function addMiddleware(string $labelProcessorClass, array $parameters = [])
     {
-        $this->collectorDeclarations[$name] = [
-            'labels' => $labels,
-            'created' => false,
-        ];
+        $this->middlewares[] = resolve($labelProcessorClass, $parameters);
     }
 
-    public function declareHistogram(string $name, array $buckets, array $labels = []): void
+    public function counter(string $name): Counter
     {
-        $this->collectorDeclarations[$name] = [
-            'labels' => $labels,
-            'buckets' => $buckets,
-            'created' => false,
-        ];
+        $this->metrics[$name] = new Counter($this, $name);
+
+        return $this->metrics[$name];
     }
 
-    public function declareSummary(string $name, int $maxAgeSeconds, array $quantiles, array $labels = []): void
+    public function gauge(string $name): Gauge
     {
-        $this->collectorDeclarations[$name] = [
-            'labels' => $labels,
-            'max_age_seconds' => $maxAgeSeconds,
-            'quantiles' => $quantiles,
-            'created' => false,
-        ];
+        $this->metrics[$name] = new Gauge($this, $name);
+
+        return $this->metrics[$name];
     }
 
-    private function checkMetricDeclared(string $name): void
+    public function histogram(string $name, array $buckets): Histogram
     {
-        if (!array_key_exists($name, $this->collectorDeclarations)) {
-            throw new InvalidArgumentException('Undefined metric ' . $name);
-        }
+        $this->metrics[$name] = new Histogram($this, $name, $buckets);
+
+        return $this->metrics[$name];
     }
 
-    private function getCounter(string $name): Counter
+    public function summary(string $name, int $maxAgeSeconds, array $quantiles): Summary
     {
-        $this->checkMetricDeclared($name);
+        $this->metrics[$name] = new Summary($this, $name, $maxAgeSeconds, $quantiles);
 
-        if (!$this->collectorDeclarations[$name]['created']) {
-            $this->getCollectors()->registerCounter(
-                $this->config['namespace'],
-                $name,
-                "",
-                $this->enrichLabelNames($this->collectorDeclarations[$name]['labels']),
-            );
-            $this->collectorDeclarations[$name]['created'] = true;
-        }
-
-        return $this->getCollectors()->getCounter(
-            $this->config['namespace'],
-            $name,
-        );
+        return $this->metrics[$name];
     }
 
-    private function getGauge(string $name): Gauge
+    public function update(string $name, $value, array $labelValues = []): void
     {
-        $this->checkMetricDeclared($name);
-
-        if (!$this->collectorDeclarations[$name]['created']) {
-            $this->getCollectors()->registerGauge(
-                $this->config['namespace'],
-                $name,
-                "",
-                $this->enrichLabelNames($this->collectorDeclarations[$name]['labels']),
-            );
-            $this->collectorDeclarations[$name]['created'] = true;
-        }
-
-        return $this->getCollectors()->getGauge(
-            $this->config['namespace'],
-            $name,
-        );
-    }
-
-    private function getHistogram($name): Histogram
-    {
-        $this->checkMetricDeclared($name);
-
-        if (!$this->collectorDeclarations[$name]['created']) {
-            $this->getCollectors()->registerHistogram(
-                $this->config['namespace'],
-                $name,
-                "",
-                $this->enrichLabelNames($this->collectorDeclarations[$name]['labels']),
-                $this->collectorDeclarations[$name]['buckets']
-            );
-            $this->collectorDeclarations[$name]['created'] = true;
-        }
-
-        return $this->getCollectors()->getHistogram(
-            $this->config['namespace'],
-            $name,
-        );
-    }
-
-    private function getSummary(string $name): Summary
-    {
-        $this->checkMetricDeclared($name);
-
-        if (!$this->collectorDeclarations[$name]['created']) {
-            $this->getCollectors()->registerSummary(
-                $this->config['namespace'],
-                $name,
-                "",
-                $this->enrichLabelNames($this->collectorDeclarations[$name]['labels']),
-                $this->collectorDeclarations[$name]['max_age_seconds'],
-                $this->collectorDeclarations[$name]['quantiles'],
-            );
-            $this->collectorDeclarations[$name]['created'] = true;
-        }
-
-        return $this->getCollectors()->getSummary(
-            $this->config['namespace'],
-            $name,
-        );
-    }
-
-    public function updateCounter(string $name, array $labelValues, $value = 1): void
-    {
-        $this->getCounter($name)->incBy(
-            $value,
-            $this->enrichLabelValues($labelValues)
-        );
-    }
-
-    public function updateGauge(string $name, array $labelValues, $value = 1): void
-    {
-        $this->getGauge($name)->set(
-            $value,
-            $this->enrichLabelValues($labelValues)
-        );
-    }
-
-    public function updateHistogram(string $name, array $labelValues, $value = 1): void
-    {
-        $this->getHistogram($name)->observe(
-            $value,
-            $this->enrichLabelValues($labelValues)
-        );
-    }
-
-    public function updateSummary(string $name, array $labelValues, $value = 1): void
-    {
-        $this->getSummary($name)->observe(
-            $value,
-            $this->enrichLabelValues($labelValues)
-        );
+        $metric = $this->metrics[$name] ?? null;
+        $metric?->update($value, $labelValues);
     }
 
     public function processOnDemandMetrics(): void
@@ -211,6 +101,7 @@ class MetricsBag
     private function getOnDemandMetric(string $onDemandMetricClass): OnDemandMetric
     {
         if (!isset($this->onDemandMetrics[$onDemandMetricClass])) {
+            /** @var OnDemandMetric $onDemandMetric */
             $onDemandMetric = resolve($onDemandMetricClass);
             $onDemandMetric->register($this);
             $this->onDemandMetrics[$onDemandMetricClass] = $onDemandMetric;
@@ -225,29 +116,7 @@ class MetricsBag
         return $renderer->render($this->getCollectors()->getMetricFamilySamples());
     }
 
-    private function enrichLabelNames(array $labels): array
-    {
-        foreach ($this->labelMiddlewares as $labelProcessor) {
-            foreach ($labelProcessor->labels() as $additionalLabel) {
-                $labels[] = $additionalLabel;
-            }
-        }
-
-        return $labels;
-    }
-
-    private function enrichLabelValues(array $labelValues): array
-    {
-        foreach ($this->labelMiddlewares as $labelProcessor) {
-            foreach ($labelProcessor->values() as $additionalValue) {
-                $labelValues[] = $additionalValue;
-            }
-        }
-
-        return $labelValues;
-    }
-
-    private function getCollectors(): CollectorRegistry
+    public function getCollectors(): CollectorRegistry
     {
         if (!$this->collectors) {
             $this->collectors = new CollectorRegistry($this->getStorage(), false);

@@ -25,8 +25,7 @@ class MetricsControllerTest extends TestCase
         $manager = resolve(PrometheusManager::class);
         $request = Request::create("http://localhost/metrics");
 
-        $manager->declareCounter('orders_count', []);
-        $manager->updateCounter('orders_count', []);
+        $manager->counter('orders_count')->update();
 
         $response = (new MetricsController())($request, $manager);
         $this->assertStringContainsString('app_orders_count', $response->getContent());

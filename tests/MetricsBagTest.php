@@ -5,46 +5,157 @@ namespace Madridianfox\LaravelPrometheus\Tests;
 use Illuminate\Http\Request;
 use Madridianfox\LaravelPrometheus\LabelMiddlewares\AppNameLabelMiddleware;
 use Madridianfox\LaravelPrometheus\MetricsBag;
+use Madridianfox\LaravelPrometheus\Tests\Fixstures\GlobalMiddleware;
+use Madridianfox\LaravelPrometheus\Tests\Fixstures\LocalMiddleware;
+use Madridianfox\LaravelPrometheus\Tests\Fixstures\SomeOnDemandMetric;
 
 class MetricsBagTest extends TestCase
 {
-    private function assertBagContains(MetricsBag $bag, string $metric, array $labels, $value): void
+    protected function assertBagContainsString(MetricsBag $bag, string $needle): void
+    {
+        $bagValues = $bag->dumpTxt();
+        $this->assertStringContainsString($needle, $bagValues);
+    }
+
+    private function assertBagContainsMetric(MetricsBag $bag, string $metric, array $labels, $value): void
     {
         $labelItems = [];
         foreach ($labels as $label => $labelValue) {
             $labelItems[] = "{$label}=\"{$labelValue}\"";
         }
-        $labelsStr = join(",", $labelItems);
-        $metricLine = "{$metric}{{$labelsStr}} {$value}";
 
-        $bagValues = $bag->dumpTxt();
+        if ($labelItems) {
+            $labelsStr = join(",", $labelItems);
+            $metricLine = "{$metric}{{$labelsStr}} {$value}";
+        } else {
+            $metricLine = "{$metric} {$value}";
+        }
 
-        $this->assertStringContainsString($metricLine, $bagValues);
+        $this->assertBagContainsString($bag, $metricLine);
     }
 
     private function assertHistogramState(MetricsBag $bag, string $metric, array $labels, int $sum, int $count, array $buckets): void
     {
-        $this->assertBagContains($bag, $metric . '_sum', $labels, $sum);
-        $this->assertBagContains($bag, $metric . '_count', $labels, $count);
+        $this->assertBagContainsMetric($bag, $metric . '_sum', $labels, $sum);
+        $this->assertBagContainsMetric($bag, $metric . '_count', $labels, $count);
 
         foreach ($buckets as $bucket => $value) {
             $bucketLabels = $labels;
             $bucketLabels['le'] = $bucket;
-            $this->assertBagContains($bag, $metric . '_bucket', $bucketLabels, $value);
+            $this->assertBagContainsMetric($bag, $metric . '_bucket', $bucketLabels, $value);
         }
     }
 
     protected function assertSummaryState(MetricsBag $bag, string $metric, array $labels, float $sum, float $count, array $quantiles): void
     {
-        $this->assertBagContains($bag, $metric . '_sum', $labels, $sum);
-        $this->assertBagContains($bag, $metric . '_count', $labels, $count);
+        $this->assertBagContainsMetric($bag, $metric . '_sum', $labels, $sum);
+        $this->assertBagContainsMetric($bag, $metric . '_count', $labels, $count);
 
         foreach ($quantiles as $quantile => $value) {
             $quantileLabels = $labels;
             $quantileLabels['quantile'] = $quantile;
 
-            $this->assertBagContains($bag, $metric, $quantileLabels, $value);
+            $this->assertBagContainsMetric($bag, $metric, $quantileLabels, $value);
         }
+    }
+
+    public function testMetricHelp()
+    {
+        $bag = new MetricsBag([
+            'namespace' => 'test',
+            'memory' => true,
+        ]);
+
+        $bag->counter('my_counter')->help("Super metric")->update();
+
+        $this->assertBagContainsString($bag, "# HELP test_my_counter Super metric");
+    }
+
+    public function labelsProvider(): array
+    {
+        return [
+            [[]],
+            [['label' => 'value']],
+            [['label_1' => 'value-1', 'label_2' => 'value-2']],
+        ];
+    }
+
+    /**
+     * @dataProvider labelsProvider
+     */
+    public function testMetricLabels(array $labels)
+    {
+        $bag = new MetricsBag([
+            'namespace' => 'test',
+            'memory' => true,
+        ]);
+
+        $bag->counter('my_counter')->labels(array_keys($labels))->update(1, array_values($labels));
+        $this->assertBagContainsMetric($bag, 'test_my_counter', $labels, 1);
+    }
+
+    /**
+     * @dataProvider labelsProvider
+     */
+    public function testGlobalMiddleware(array $labels)
+    {
+        $bag = new MetricsBag([
+            'namespace' => 'test',
+            'memory' => true,
+            'label_middlewares' => [
+                GlobalMiddleware::class,
+            ]
+        ]);
+
+        $bag->counter('my_counter')->labels(array_keys($labels))->update(1, array_values($labels));
+
+        $labels = GlobalMiddleware::injectToMap($labels);
+
+        $this->assertBagContainsMetric($bag, 'test_my_counter', $labels, 1);
+    }
+
+    /**
+     * @dataProvider labelsProvider
+     */
+    public function testLocalMiddleware(array $labels)
+    {
+        $bag = new MetricsBag([
+            'namespace' => 'test',
+            'memory' => true,
+        ]);
+
+        $bag->counter('my_counter')
+            ->middleware(LocalMiddleware::class)
+            ->labels(array_keys($labels))
+            ->update(1, array_values($labels));
+
+        $labels = LocalMiddleware::injectToMap($labels);
+
+        $this->assertBagContainsMetric($bag, 'test_my_counter', $labels, 1);
+    }
+
+    /**
+     * @dataProvider labelsProvider
+     */
+    public function testBothMiddlewares(array $labels)
+    {
+        $bag = new MetricsBag([
+            'namespace' => 'test',
+            'memory' => true,
+            'label_middlewares' => [
+                GlobalMiddleware::class,
+            ]
+        ]);
+
+        $bag->counter('my_counter')
+            ->middleware(LocalMiddleware::class)
+            ->labels(array_keys($labels))
+            ->update(1, array_values($labels));
+
+        $labels = GlobalMiddleware::injectToMap($labels);
+        $labels = LocalMiddleware::injectToMap($labels);
+
+        $this->assertBagContainsMetric($bag, 'test_my_counter', $labels, 1);
     }
 
     public function testCounter()
@@ -54,16 +165,16 @@ class MetricsBagTest extends TestCase
             'memory' => true,
         ]);
 
-        $bag->declareCounter('my_counter', ['my_label']);
+        $bag->counter('my_counter')->labels(['my_label']);
 
-        $bag->updateCounter('my_counter', ['my-value']);
-        $this->assertBagContains($bag, 'test_my_counter', ["my_label" => "my-value"], 1);
+        $bag->update('my_counter', 1, ['my-value']);
+        $this->assertBagContainsMetric($bag, 'test_my_counter', ["my_label" => "my-value"], 1);
 
-        $bag->updateCounter('my_counter', ['my-value']);
-        $this->assertBagContains($bag, 'test_my_counter', ["my_label" => "my-value"], 2);
+        $bag->update('my_counter', 1, ['my-value']);
+        $this->assertBagContainsMetric($bag, 'test_my_counter', ["my_label" => "my-value"], 2);
 
-        $bag->updateCounter('my_counter', ['my-value'], 2.5);
-        $this->assertBagContains($bag, 'test_my_counter', ["my_label" => "my-value"], 4.5);
+        $bag->update('my_counter', 2.5, ['my-value']);
+        $this->assertBagContainsMetric($bag, 'test_my_counter', ["my_label" => "my-value"], 4.5);
     }
 
     public function testGauge()
@@ -73,13 +184,13 @@ class MetricsBagTest extends TestCase
             'memory' => true,
         ]);
 
-        $bag->declareGauge('my_gauge', ['my_label']);
+        $bag->gauge('my_gauge')->labels(['my_label']);
 
-        $bag->updateGauge('my_gauge', ['my-value'], 10);
-        $this->assertBagContains($bag, 'test_my_gauge', ["my_label" => "my-value"], 10);
+        $bag->update('my_gauge', 10, ['my-value']);
+        $this->assertBagContainsMetric($bag, 'test_my_gauge', ["my_label" => "my-value"], 10);
 
-        $bag->updateGauge('my_gauge', ['my-value'], 5);
-        $this->assertBagContains($bag, 'test_my_gauge', ["my_label" => "my-value"], 5);
+        $bag->update('my_gauge', 5, ['my-value']);
+        $this->assertBagContainsMetric($bag, 'test_my_gauge', ["my_label" => "my-value"], 5);
     }
 
     public function testHistogram()
@@ -89,30 +200,30 @@ class MetricsBagTest extends TestCase
             'memory' => true,
         ]);
 
-        $bag->declareHistogram('my_histogram', [2, 4], ['my_label']);
+        $bag->histogram('my_histogram', [2, 4])->labels(['my_label']);
 
-        $bag->updateHistogram('my_histogram', ["my_label" => "my-value"], 3);
+        $bag->update('my_histogram', 3, ["my_label" => "my-value"]);
         $this->assertHistogramState($bag, 'test_my_histogram', ["my_label" => "my-value"], 3, 1, [
             2 => 0,
             4 => 1,
             "+Inf" => 1
         ]);
 
-        $bag->updateHistogram('my_histogram', ["my_label" => "my-value"], 5);
+        $bag->update('my_histogram', 5, ["my_label" => "my-value"]);
         $this->assertHistogramState($bag, 'test_my_histogram', ["my_label" => "my-value"], 8, 2, [
             2 => 0,
             4 => 1,
             "+Inf" => 2
         ]);
 
-        $bag->updateHistogram('my_histogram', ["my_label" => "my-value"], 1);
+        $bag->update('my_histogram', 1, ["my_label" => "my-value"]);
         $this->assertHistogramState($bag, 'test_my_histogram', ["my_label" => "my-value"], 9, 3, [
             2 => 1,
             4 => 2,
             "+Inf" => 3
         ]);
 
-        $bag->updateHistogram('my_histogram', ["my_label" => "my-value"], 50);
+        $bag->update('my_histogram', 50, ["my_label" => "my-value"]);
         $this->assertHistogramState($bag, 'test_my_histogram', ["my_label" => "my-value"], 59, 4, [
             2 => 1,
             4 => 2,
@@ -134,14 +245,14 @@ class MetricsBagTest extends TestCase
             'namespace' => 'test',
             'memory' => true,
         ]);
-        $bag->declareSummary('my_summary', 120, [0.5, 0.9], ['my_label']);
+        $bag->summary('my_summary', 120, [0.5, 0.9])->labels(['my_label']);
 
         $values = [];
 
         for ($i = 0; $i < 10; $i++) {
             $value = mt_rand(0, 100);
             $values[] = $value;
-            $bag->updateSummary('my_summary', ["my-value"], $value);
+            $bag->update('my_summary', $value, ["my-value"]);
         }
 
         $this->assertSummaryState($bag, 'test_my_summary', ['my_label' => 'my-value'], array_sum($values), 10, [
@@ -162,10 +273,10 @@ class MetricsBagTest extends TestCase
             ]
         ]);
 
-        $bag->declareCounter('my_counter', ['my_label']);
+        $bag->counter('my_counter')->labels(['my_label']);
 
-        $bag->updateCounter('my_counter', ['my-value'], 42);
-        $this->assertBagContains($bag, 'test_my_counter', ["my_label" => "my-value", "app" => "app-name"], 42);
+        $bag->update('my_counter', 42, ['my-value']);
+        $this->assertBagContainsMetric($bag, 'test_my_counter', ["my_label" => "my-value", "app" => "app-name"], 42);
     }
 
     public function testWipeStorage()
@@ -175,14 +286,14 @@ class MetricsBagTest extends TestCase
             'memory' => true,
         ]);
 
-        $bag->declareCounter('my_counter', ['my_label']);
+        $bag->counter('my_counter')->labels(['my_label']);
 
-        $bag->updateCounter('my_counter', ['my-value'], 42);
-        $this->assertBagContains($bag, 'test_my_counter', ["my_label" => "my-value"], 42);
+        $bag->update('my_counter', 42, ['my-value']);
+        $this->assertBagContainsMetric($bag, 'test_my_counter', ["my_label" => "my-value"], 42);
 
         $bag->wipe();
-        $bag->updateCounter('my_counter', ['my-value'], 5);
-        $this->assertBagContains($bag, 'test_my_counter', ["my_label" => "my-value"], 5);
+        $bag->update('my_counter', 5, ['my-value']);
+        $this->assertBagContainsMetric($bag, 'test_my_counter', ["my_label" => "my-value"], 5);
     }
 
     public function testBagAuth()
@@ -200,5 +311,20 @@ class MetricsBagTest extends TestCase
         $this->assertFalse($bag->auth(Request::create("http://user:123456@localhost/metrics")));
         $this->assertFalse($bag->auth(Request::create("http://bot:secret@localhost/metrics")));
         $this->assertFalse($bag->auth(Request::create("http://localhost/metrics")));
+    }
+
+    public function testOnDemandMetrics()
+    {
+        $bag = new MetricsBag([
+            'namespace' => 'test',
+            'memory' => true,
+            'on_demand_metrics' => [
+                SomeOnDemandMetric::class,
+            ]
+        ]);
+
+        $bag->processOnDemandMetrics();
+
+        $this->assertBagContainsMetric($bag, 'test_on_demand_counter', [], 1);
     }
 }
