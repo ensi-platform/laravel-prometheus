@@ -12,6 +12,7 @@ use Madridianfox\LaravelPrometheus\Metrics\Summary;
  * @method static MetricsBag bag(?string $name = null)
  * @method static void setDefaultBag(string $bagName)
  * @method static void addMiddleware(string $labelProcessorClass, array $parameters = [])
+ * @method static void addOnDemandMetric(string $onDemandMetricClass)
  *
  * @method static Counter counter(string $name, array $labels = [])
  * @method static Gauge gauge(string $name, array $labels = [])

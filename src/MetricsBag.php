@@ -39,6 +39,10 @@ class MetricsBag
                 $this->addMiddleware(labelProcessorClass: $index, parameters: $value);
             }
         }
+
+        foreach ($this->config['on_demand_metrics'] ?? [] as $onDemandMetricClass) {
+            $this->addOnDemandMetric($onDemandMetricClass);
+        }
     }
 
     public function getNamespace(): string
@@ -92,22 +96,17 @@ class MetricsBag
 
     public function processOnDemandMetrics(): void
     {
-        foreach ($this->config['on_demand_metrics'] ?? [] as $onDemandMetricClass) {
-            $onDemandMetric = $this->getOnDemandMetric($onDemandMetricClass);
+        foreach ($this->onDemandMetrics as $onDemandMetric) {
             $onDemandMetric->update($this);
         }
     }
 
-    private function getOnDemandMetric(string $onDemandMetricClass): OnDemandMetric
+    public function addOnDemandMetric(string $onDemandMetricClass): void
     {
-        if (!isset($this->onDemandMetrics[$onDemandMetricClass])) {
-            /** @var OnDemandMetric $onDemandMetric */
-            $onDemandMetric = resolve($onDemandMetricClass);
-            $onDemandMetric->register($this);
-            $this->onDemandMetrics[$onDemandMetricClass] = $onDemandMetric;
-        }
-
-        return $this->onDemandMetrics[$onDemandMetricClass];
+        /** @var OnDemandMetric $onDemandMetric */
+        $onDemandMetric = resolve($onDemandMetricClass);
+        $onDemandMetric->register($this);
+        $this->onDemandMetrics[$onDemandMetricClass] = $onDemandMetric;
     }
 
     public function dumpTxt(): string
