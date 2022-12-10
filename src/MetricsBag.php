@@ -62,34 +62,51 @@ class MetricsBag
 
     public function counter(string $name): Counter
     {
-        $this->metrics[$name] = new Counter($this, $name);
+        if (!isset($this->metrics[$name])) {
+            $this->metrics[$name] = new Counter($this, $name);
+        }
 
         return $this->metrics[$name];
     }
 
     public function gauge(string $name): Gauge
     {
-        $this->metrics[$name] = new Gauge($this, $name);
+        if (!isset($this->metrics[$name])) {
+            $this->metrics[$name] = new Gauge($this, $name);
+        }
 
         return $this->metrics[$name];
     }
 
     public function histogram(string $name, array $buckets): Histogram
     {
-        $this->metrics[$name] = new Histogram($this, $name, $buckets);
+        if (!isset($this->metrics[$name])) {
+            $this->metrics[$name] = new Histogram($this, $name, $buckets);
+        }
 
         return $this->metrics[$name];
     }
 
     public function summary(string $name, int $maxAgeSeconds, array $quantiles): Summary
     {
-        $this->metrics[$name] = new Summary($this, $name, $maxAgeSeconds, $quantiles);
+        if (!isset($this->metrics[$name])) {
+            $this->metrics[$name] = new Summary($this, $name, $maxAgeSeconds, $quantiles);
+        }
 
         return $this->metrics[$name];
     }
 
+    private function isPrometheusEnabled(): bool
+    {
+        return config('prometheus.enabled');
+    }
+
     public function update(string $name, $value, array $labelValues = []): void
     {
+        if (!$this->isPrometheusEnabled()) {
+            return;
+        }
+
         $metric = $this->metrics[$name] ?? null;
         $metric?->update($value, $labelValues);
     }
@@ -111,6 +128,10 @@ class MetricsBag
 
     public function dumpTxt(): string
     {
+        if (!$this->isPrometheusEnabled()) {
+            return '';
+        }
+
         $renderer = new RenderTextFormat();
         return $renderer->render($this->getCollectors()->getMetricFamilySamples());
     }
@@ -152,6 +173,10 @@ class MetricsBag
 
     public function wipe(): void
     {
+        if (!$this->isPrometheusEnabled()) {
+            return;
+        }
+
         $this->getCollectors()->wipeStorage();
     }
 

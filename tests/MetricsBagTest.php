@@ -261,6 +261,19 @@ class MetricsBagTest extends TestCase
         ]);
     }
 
+    public function testNoCreateSameMetricTwice(): void
+    {
+        $bag = new MetricsBag([
+            'namespace' => 'test',
+            'memory' => true,
+        ]);
+
+        $counter1 = $bag->counter('my_counter');
+        $counter2 = $bag->counter('my_counter');
+
+        $this->assertSame($counter1, $counter2);
+    }
+
     public function testLabelMiddleware()
     {
         config(['app.name' => 'app-name']);
@@ -326,5 +339,26 @@ class MetricsBagTest extends TestCase
         $bag->processOnDemandMetrics();
 
         $this->assertBagContainsMetric($bag, 'test_on_demand_counter', [], 1);
+    }
+
+    public function testNoUpdatesWhenPrometheusDisabled(): void
+    {
+        config([
+            'prometheus' => [
+                'enabled' => false,
+            ]
+        ]);
+
+        $bag = new MetricsBag([
+            'namespace' => 'test',
+            'memory' => true,
+        ]);
+
+        $bag->counter('my_counter')->labels(['my_label']);
+
+        $bag->update('my_counter', 1, ['my-value']);
+
+        $bagValues = $bag->dumpTxt();
+        $this->assertStringNotContainsString('test_my_counter', $bagValues);
     }
 }

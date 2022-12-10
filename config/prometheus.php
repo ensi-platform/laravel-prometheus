@@ -2,6 +2,7 @@
 
 return [
     'default_bag' => 'default',
+    'enabled' => env('PROMETHEUS_ENABLED', true),
     'bags' => [
         'default' => [
             'namespace' => env('PROMETHEUS_NAMESPACE', 'app'),
