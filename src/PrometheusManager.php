@@ -1,6 +1,6 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus;
+namespace Ensi\LaravelPrometheus;
 
 use InvalidArgumentException;
 

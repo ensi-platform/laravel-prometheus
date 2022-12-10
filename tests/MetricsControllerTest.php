@@ -1,10 +1,10 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus\Tests;
+namespace Ensi\LaravelPrometheus\Tests;
 
+use Ensi\LaravelPrometheus\Controllers\MetricsController;
+use Ensi\LaravelPrometheus\PrometheusManager;
 use Illuminate\Http\Request;
-use Madridianfox\LaravelPrometheus\Controllers\MetricsController;
-use Madridianfox\LaravelPrometheus\PrometheusManager;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class MetricsControllerTest extends TestCase

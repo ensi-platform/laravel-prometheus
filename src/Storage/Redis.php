@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Madridianfox\LaravelPrometheus\Storage;
+namespace Ensi\LaravelPrometheus\Storage;
 
 use InvalidArgumentException;
 use Prometheus\Counter;

@@ -1,9 +1,9 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus\Tests\Fixstures;
+namespace Ensi\LaravelPrometheus\Tests\Fixstures;
 
-use Madridianfox\LaravelPrometheus\MetricsBag;
-use Madridianfox\LaravelPrometheus\OnDemandMetrics\OnDemandMetric;
+use Ensi\LaravelPrometheus\MetricsBag;
+use Ensi\LaravelPrometheus\OnDemandMetrics\OnDemandMetric;
 
 class SomeOnDemandMetric implements OnDemandMetric
 {

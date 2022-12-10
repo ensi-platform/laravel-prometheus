@@ -1,8 +1,8 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus\Tests\Fixstures;
+namespace Ensi\LaravelPrometheus\Tests\Fixstures;
 
-use Madridianfox\LaravelPrometheus\LabelMiddlewares\LabelMiddleware;
+use Ensi\LaravelPrometheus\LabelMiddlewares\LabelMiddleware;
 
 class LocalMiddleware extends AbstractTestingMiddleware implements LabelMiddleware
 {

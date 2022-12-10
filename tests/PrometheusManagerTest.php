@@ -1,10 +1,10 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus\Tests;
+namespace Ensi\LaravelPrometheus\Tests;
 
+use Ensi\LaravelPrometheus\MetricsBag;
+use Ensi\LaravelPrometheus\PrometheusManager;
 use InvalidArgumentException;
-use Madridianfox\LaravelPrometheus\MetricsBag;
-use Madridianfox\LaravelPrometheus\PrometheusManager;
 use Mockery\MockInterface;
 
 class PrometheusManagerTest extends TestCase

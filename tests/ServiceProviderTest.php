@@ -1,9 +1,9 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus\Tests;
+namespace Ensi\LaravelPrometheus\Tests;
 
+use Ensi\LaravelPrometheus\PrometheusManager;
 use Illuminate\Support\Facades\Route;
-use Madridianfox\LaravelPrometheus\PrometheusManager;
 
 class ServiceProviderTest extends TestCase
 {

@@ -1,12 +1,12 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus;
+namespace Ensi\LaravelPrometheus;
 
+use Ensi\LaravelPrometheus\Metrics\Counter;
+use Ensi\LaravelPrometheus\Metrics\Gauge;
+use Ensi\LaravelPrometheus\Metrics\Histogram;
+use Ensi\LaravelPrometheus\Metrics\Summary;
 use Illuminate\Support\Facades\Facade;
-use Madridianfox\LaravelPrometheus\Metrics\Counter;
-use Madridianfox\LaravelPrometheus\Metrics\Gauge;
-use Madridianfox\LaravelPrometheus\Metrics\Histogram;
-use Madridianfox\LaravelPrometheus\Metrics\Summary;
 
 /**
  * @method static MetricsBag bag(?string $name = null)
@@ -25,7 +25,7 @@ use Madridianfox\LaravelPrometheus\Metrics\Summary;
  * @method static void wipe()
  * @method static bool auth(\Illuminate\Http\Request $request)
  *
- * @see \Madridianfox\LaravelPrometheus\PrometheusManager
+ * @see \Ensi\LaravelPrometheus\PrometheusManager
  */
 class Prometheus extends Facade
 {

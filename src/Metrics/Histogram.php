@@ -1,8 +1,8 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus\Metrics;
+namespace Ensi\LaravelPrometheus\Metrics;
 
-use Madridianfox\LaravelPrometheus\MetricsBag;
+use Ensi\LaravelPrometheus\MetricsBag;
 use Prometheus\Histogram as LowLevelHistogram;
 
 class Histogram extends AbstractMetric

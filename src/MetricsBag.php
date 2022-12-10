@@ -1,18 +1,18 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus;
+namespace Ensi\LaravelPrometheus;
 
+use Ensi\LaravelPrometheus\LabelMiddlewares\LabelMiddleware;
+use Ensi\LaravelPrometheus\Metrics\AbstractMetric;
+use Ensi\LaravelPrometheus\Metrics\Counter;
+use Ensi\LaravelPrometheus\Metrics\Gauge;
+use Ensi\LaravelPrometheus\Metrics\Histogram;
+use Ensi\LaravelPrometheus\Metrics\Summary;
+use Ensi\LaravelPrometheus\OnDemandMetrics\OnDemandMetric;
+use Ensi\LaravelPrometheus\Storage\Redis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis as RedisManager;
 use InvalidArgumentException;
-use Madridianfox\LaravelPrometheus\LabelMiddlewares\LabelMiddleware;
-use Madridianfox\LaravelPrometheus\Metrics\AbstractMetric;
-use Madridianfox\LaravelPrometheus\Metrics\Counter;
-use Madridianfox\LaravelPrometheus\Metrics\Gauge;
-use Madridianfox\LaravelPrometheus\Metrics\Histogram;
-use Madridianfox\LaravelPrometheus\Metrics\Summary;
-use Madridianfox\LaravelPrometheus\OnDemandMetrics\OnDemandMetric;
-use Madridianfox\LaravelPrometheus\Storage\Redis;
 use Prometheus\CollectorRegistry;
 use Prometheus\RenderTextFormat;
 use Prometheus\Storage\Adapter;

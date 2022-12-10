@@ -1,13 +1,13 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus\Tests;
+namespace Ensi\LaravelPrometheus\Tests;
 
+use Ensi\LaravelPrometheus\LabelMiddlewares\AppNameLabelMiddleware;
+use Ensi\LaravelPrometheus\MetricsBag;
+use Ensi\LaravelPrometheus\Tests\Fixstures\GlobalMiddleware;
+use Ensi\LaravelPrometheus\Tests\Fixstures\LocalMiddleware;
+use Ensi\LaravelPrometheus\Tests\Fixstures\SomeOnDemandMetric;
 use Illuminate\Http\Request;
-use Madridianfox\LaravelPrometheus\LabelMiddlewares\AppNameLabelMiddleware;
-use Madridianfox\LaravelPrometheus\MetricsBag;
-use Madridianfox\LaravelPrometheus\Tests\Fixstures\GlobalMiddleware;
-use Madridianfox\LaravelPrometheus\Tests\Fixstures\LocalMiddleware;
-use Madridianfox\LaravelPrometheus\Tests\Fixstures\SomeOnDemandMetric;
 
 class MetricsBagTest extends TestCase
 {

@@ -1,11 +1,11 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus\Controllers;
+namespace Ensi\LaravelPrometheus\Controllers;
 
+use Ensi\LaravelPrometheus\MetricsBag;
+use Ensi\LaravelPrometheus\PrometheusManager;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Madridianfox\LaravelPrometheus\MetricsBag;
-use Madridianfox\LaravelPrometheus\PrometheusManager;
 use Prometheus\RenderTextFormat;
 
 class MetricsController

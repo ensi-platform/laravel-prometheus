@@ -1,15 +1,15 @@
 {
-    "name": "madridianfox/laravel-prometheus",
+    "name": "ensi/laravel-prometheus",
     "type": "library",
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Madridianfox\\LaravelPrometheus\\": "src/"
+            "Ensi\\LaravelPrometheus\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Madridianfox\\LaravelPrometheus\\Tests\\": "tests/"
+            "Ensi\\LaravelPrometheus\\Tests\\": "tests/"
         }
     },
     "minimum-stability": "stable",
@@ -26,7 +26,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Madridianfox\\LaravelPrometheus\\PrometheusServiceProvider"
+                "Ensi\\LaravelPrometheus\\PrometheusServiceProvider"
             ]
         }
     }

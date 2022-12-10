@@ -1,8 +1,8 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus\OnDemandMetrics;
+namespace Ensi\LaravelPrometheus\OnDemandMetrics;
 
-use Madridianfox\LaravelPrometheus\MetricsBag;
+use Ensi\LaravelPrometheus\MetricsBag;
 
 class MemoryUsageOnDemandMetric implements OnDemandMetric
 {

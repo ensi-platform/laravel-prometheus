@@ -1,6 +1,6 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus\LabelMiddlewares;
+namespace Ensi\LaravelPrometheus\LabelMiddlewares;
 
 use function config;
 

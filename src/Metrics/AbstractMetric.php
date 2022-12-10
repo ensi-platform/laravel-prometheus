@@ -1,9 +1,9 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus\Metrics;
+namespace Ensi\LaravelPrometheus\Metrics;
 
-use Madridianfox\LaravelPrometheus\LabelMiddlewares\LabelMiddleware;
-use Madridianfox\LaravelPrometheus\MetricsBag;
+use Ensi\LaravelPrometheus\LabelMiddlewares\LabelMiddleware;
+use Ensi\LaravelPrometheus\MetricsBag;
 
 abstract class AbstractMetric
 {

@@ -1,10 +1,10 @@
 <?php
 
-namespace Madridianfox\LaravelPrometheus;
+namespace Ensi\LaravelPrometheus;
 
+use Ensi\LaravelPrometheus\Controllers\MetricsController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use Madridianfox\LaravelPrometheus\Controllers\MetricsController;
 
 class PrometheusServiceProvider extends ServiceProvider
 {
