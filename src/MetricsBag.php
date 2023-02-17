@@ -9,6 +9,7 @@ use Ensi\LaravelPrometheus\Metrics\Gauge;
 use Ensi\LaravelPrometheus\Metrics\Histogram;
 use Ensi\LaravelPrometheus\Metrics\Summary;
 use Ensi\LaravelPrometheus\OnDemandMetrics\OnDemandMetric;
+use Ensi\LaravelPrometheus\Storage\NullStorage;
 use Ensi\LaravelPrometheus\Storage\Redis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis as RedisManager;
@@ -133,7 +134,12 @@ class MetricsBag
         }
 
         $renderer = new RenderTextFormat();
-        return $renderer->render($this->getCollectors()->getMetricFamilySamples());
+        try {
+            return $renderer->render($this->getCollectors()->getMetricFamilySamples());
+        } catch (\RedisException) {
+        }
+
+        return "";
     }
 
     public function getCollectors(): CollectorRegistry
@@ -158,17 +164,23 @@ class MetricsBag
                 return new APCng($this->config['apcu-ng']['prefix']);
             case array_key_exists('memory', $this->config):
                 return new InMemory();
+            case array_key_exists('null-storage', $this->config):
+                return new NullStorage();
         }
         throw new InvalidArgumentException("Missing storage configuration");
     }
 
     private function createStorageFromConnection(array $options): Adapter
     {
-        $redisConnection = RedisManager::connection($options['connection']);
+        try {
+            $redisConnection = RedisManager::connection($options['connection']);
 
-        return Redis::fromExistingConnection($redisConnection->client(), [
-            'bag' => $options['bag'],
-        ]);
+            return Redis::fromExistingConnection($redisConnection->client(), [
+                'bag' => $options['bag'],
+            ]);
+        }  catch (\RedisException) {
+            return new NullStorage();
+        }
     }
 
     public function wipe(): void

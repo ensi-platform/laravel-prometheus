@@ -19,23 +19,29 @@ class Summary extends AbstractMetric
 
     public function update($value = 1, array $labelValues = []): void
     {
-        $this->getSummary()->observe(
-            $value,
-            $this->enrichLabelValues($labelValues)
-        );
+        try {
+            $this->getSummary()->observe(
+                $value,
+                $this->enrichLabelValues($labelValues)
+            );
+        } catch (\RedisException) {
+        }
     }
 
     private function getSummary(): LowLevelSummary
     {
         if (!$this->summary) {
-            $this->summary = $this->metricsBag->getCollectors()->registerSummary(
-                $this->metricsBag->getNamespace(),
-                $this->name,
-                $this->help,
-                $this->enrichLabelNames($this->labels),
-                $this->maxAgeSeconds,
-                $this->quantiles,
-            );
+            try {
+                $this->summary = $this->metricsBag->getCollectors()->registerSummary(
+                    $this->metricsBag->getNamespace(),
+                    $this->name,
+                    $this->help,
+                    $this->enrichLabelNames($this->labels),
+                    $this->maxAgeSeconds,
+                    $this->quantiles,
+                );
+            } catch (\RedisException) {
+            }
         }
 
         return $this->summary;

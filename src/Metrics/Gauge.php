@@ -17,21 +17,27 @@ class Gauge extends AbstractMetric
 
     public function update($value = 1, array $labelValues = []): void
     {
-        $this->getGauge()->set(
-            $value,
-            $this->enrichLabelValues($labelValues)
-        );
+        try {
+            $this->getGauge()->set(
+                $value,
+                $this->enrichLabelValues($labelValues)
+            );
+        } catch (\RedisException $e) {
+        }
     }
 
     private function getGauge(): LowLevelGauge
     {
         if (!$this->gauge) {
-            $this->gauge = $this->metricsBag->getCollectors()->registerGauge(
-                $this->metricsBag->getNamespace(),
-                $this->name,
-                $this->help,
-                $this->enrichLabelNames($this->labels),
-            );
+            try {
+                $this->gauge = $this->metricsBag->getCollectors()->registerGauge(
+                    $this->metricsBag->getNamespace(),
+                    $this->name,
+                    $this->help,
+                    $this->enrichLabelNames($this->labels),
+                );
+            } catch (\RedisException) {
+            }
         }
 
         return $this->gauge;

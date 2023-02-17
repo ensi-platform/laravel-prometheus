@@ -17,21 +17,27 @@ class Counter extends AbstractMetric
 
     public function update($value = 1, array $labelValues = []): void
     {
-        $this->getCounter()->incBy(
-            $value,
-            $this->enrichLabelValues($labelValues)
-        );
+        try {
+            $this->getCounter()->incBy(
+                $value,
+                $this->enrichLabelValues($labelValues)
+            );
+        } catch (\RedisException $e) {
+        }
     }
 
     private function getCounter(): LowLevelCounter
     {
         if (!$this->counter) {
-            $this->counter = $this->metricsBag->getCollectors()->registerCounter(
-                $this->metricsBag->getNamespace(),
-                $this->name,
-                $this->help,
-                $this->enrichLabelNames($this->labels),
-            );
+            try {
+                $this->counter = $this->metricsBag->getCollectors()->registerCounter(
+                    $this->metricsBag->getNamespace(),
+                    $this->name,
+                    $this->help,
+                    $this->enrichLabelNames($this->labels),
+                );
+            } catch (\RedisException) {
+            }
         }
 
         return $this->counter;
