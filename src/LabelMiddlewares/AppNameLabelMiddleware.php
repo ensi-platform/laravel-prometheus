@@ -13,6 +13,6 @@ class AppNameLabelMiddleware implements LabelMiddleware
 
     public function values(): array
     {
-        return [config('app.name')];
+        return [config('prometheus.app_name')];
     }
 }

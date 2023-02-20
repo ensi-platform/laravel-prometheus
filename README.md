@@ -50,6 +50,8 @@ public function handle($request, Closure $next)
 # config/prometheus.php
 return [
     'default_bag' => '<bag-name>',
+    'enabled' => env('PROMETHEUS_ENABLED', true),
+    'app_name' => env('PROMETHEUS_APP_NAME', env('APP_NAME')),
     'bags' => [
         '<bag-name>' => [
             'namespace' => '<prometheus-namespace>',

@@ -3,6 +3,7 @@
 return [
     'default_bag' => 'default',
     'enabled' => env('PROMETHEUS_ENABLED', true),
+    'app_name' => env('PROMETHEUS_APP_NAME', env('APP_NAME')),
     'bags' => [
         'default' => [
             'namespace' => env('PROMETHEUS_NAMESPACE', 'app'),
@@ -16,10 +17,10 @@ return [
                 'bag' => 'default',
             ],
             'label_middlewares' => [
-                \Ensi\LaravelPrometheus\LabelMiddlewares\AppNameLabelMiddleware::class,
+                // \Ensi\LaravelPrometheus\LabelMiddlewares\AppNameLabelMiddleware::class,
             ],
             'on_demand_metrics' => [
-                \Ensi\LaravelPrometheus\OnDemandMetrics\MemoryUsageOnDemandMetric::class,
+                // \Ensi\LaravelPrometheus\OnDemandMetrics\MemoryUsageOnDemandMetric::class,
             ],
         ],
     ],

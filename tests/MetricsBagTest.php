@@ -276,7 +276,9 @@ class MetricsBagTest extends TestCase
 
     public function testLabelMiddleware()
     {
-        config(['app.name' => 'app-name']);
+        config([
+            'prometheus.app_name' => 'app-name'
+        ]);
 
         $bag = new MetricsBag([
             'namespace' => 'test',
