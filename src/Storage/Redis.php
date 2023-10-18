@@ -411,7 +411,7 @@ LUA
      * @param array $data
      * @return bool|int
      */
-    private function removeMetricOnLabelDiff(array $data): bool|int
+    private function removeMetricOnLabelDiff(array $data): bool
     {
         $metrics = match ($data['type']) {
             Counter::TYPE => $this->collectCounters(),
@@ -430,8 +430,8 @@ LUA
             $labelDiff2 = count(array_diff($data['labelNames'], $metric['labelNames']));
 
             if (
-                $labelDiff1 == 0 && $labelDiff2 == 0 ||
-                $labelDiff1 == count($metric['labelNames']) && $labelDiff2 == count($data['labelNames'])
+                ($labelDiff1 == 0 && $labelDiff2 == 0) ||
+                ($labelDiff1 == count($metric['labelNames']) && $labelDiff2 == count($data['labelNames']))
             ) {
                 return false;
             }
@@ -446,19 +446,39 @@ LUA
      * @param string $type
      * @param array $data
      * @return bool|int
-     * @throws RedisException
+     * @throws \RedisException
      */
-    public function removeMetric(string $type, array $data): bool|int
+    public function removeMetric(string $type, array $data): bool
     {
-        $metricKeyForRemove = $this->getGlobalPrefix() . $this->prefix . ':' . implode(':', [$type, $data['name']]);
+        $metricKeyForDelete = $this->getGlobalPrefix() . $this->prefix;
+        $metricKeyForDelete .= match ($data['type']) {
+            Summary::TYPE => $type . implode(':', [self::PROMETHEUS_METRIC_KEYS_SUFFIX, $data['name']]). ':*',
+            default => ':' . implode(':', [$type, $data['name']]),
+        };
 
-        return $this->redis->eval(
+        $result =  boolval($this->redis->eval(
             <<<LUA
-            return redis.call('DEL', ARGV[1])
+            local cursor = "0"
+            local delResult = "0"
+            repeat
+                local results = redis.call('SCAN', cursor, 'MATCH', ARGV[1])
+                cursor = results[1]
+                for _, key in ipairs(results[2]) do
+                    delResult = delResults + redis.call('DEL', key)
+                end
+            until cursor == "0"
+            return delResult
 LUA
             ,
-            [$metricKeyForRemove]
-        );
+            [$metricKeyForDelete]
+        ));
+
+        $error = $this->redis->getLastError();
+        if (!$result && $error != null) {
+            throw new RuntimeException($error);
+        }
+
+        return $result;
     }
 
 
