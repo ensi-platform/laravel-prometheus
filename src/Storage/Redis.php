@@ -464,7 +464,7 @@ LUA
                 local results = redis.call('SCAN', cursor, 'MATCH', ARGV[1])
                 cursor = results[1]
                 for _, key in ipairs(results[2]) do
-                    delResult = delResults + redis.call('DEL', key)
+                    delResult = delResult + redis.call('DEL', key)
                 end
             until cursor == "0"
             return delResult
