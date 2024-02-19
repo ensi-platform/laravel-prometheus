@@ -102,10 +102,25 @@ class MetricsBag
         return config('prometheus.enabled');
     }
 
+    private function apcuAdapterIsUsed(): bool
+    {
+        return isset($this->config['apcu']) || isset($this->config['apcu-ng']);
+    }
+
     public function update(string $name, $value, array $labelValues = []): void
     {
         if (!$this->isPrometheusEnabled()) {
             return;
+        }
+
+        if ($this->apcuAdapterIsUsed()) {
+            $labelValues = array_map(function ($labelValue) {
+                if (!is_string($labelValue)) {
+                    $labelValue = (string)$labelValue;
+                }
+
+                return $labelValue;
+            }, $labelValues);
         }
 
         $metric = $this->metrics[$name] ?? null;
