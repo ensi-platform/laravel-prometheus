@@ -116,7 +116,7 @@ class MetricsBag
         if ($this->apcuAdapterIsUsed()) {
             $labelValues = array_map(function ($labelValue) {
                 if (!is_string($labelValue)) {
-                    $labelValue = (string)$labelValue;
+                    $labelValue = json_encode($labelValue);
                 }
 
                 return $labelValue;
