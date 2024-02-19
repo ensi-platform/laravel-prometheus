@@ -102,9 +102,9 @@ class MetricsBag
         return config('prometheus.enabled');
     }
 
-    private function apcuAdapterIsUsed(): bool
+    private function apcuNgAdapterIsUsed(): bool
     {
-        return isset($this->config['apcu']) || isset($this->config['apcu-ng']);
+        return isset($this->config['apcu-ng']);
     }
 
     public function update(string $name, $value, array $labelValues = []): void
@@ -113,7 +113,7 @@ class MetricsBag
             return;
         }
 
-        if ($this->apcuAdapterIsUsed()) {
+        if ($this->apcuNgAdapterIsUsed()) {
             $labelValues = array_map(function ($labelValue) {
                 if (!is_string($labelValue)) {
                     $labelValue = json_encode($labelValue);
