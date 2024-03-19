@@ -194,7 +194,9 @@ app_http_requests_count{endpoint="catalog/products",code="200",tenant="JBZ-987-H
 Такие метрики можно рассчитывать в момент сбора метрик прометеусом.
 Для этого вам нужно создать т.н. on demand метрику. Это класс, в котором вы регистрируете метрики и устанавливаете в них значения.
 ```php
-class QueueLengthOnDemandMetric extends OnDemandMetric {
+use Ensi\LaravelPrometheus\OnDemandMetrics\OnDemandMetric;
+
+class QueueLengthOnDemandMetric implements OnDemandMetric {
     public function register(MetricsBag $metricsBag): void
     {
         $metricsBag->gauge('queue_length');
@@ -206,6 +208,8 @@ class QueueLengthOnDemandMetric extends OnDemandMetric {
     }
 }
 ```
+Затем зарегистрируйте метрику через `Prometheus::addOnDemandMetric(QueueLengthOnDemandMetric::class);` 
+
 Обновление таких метрик происходит в момент обращения прометеуса к эндпоинту получения метрик.
 
 ## License
