@@ -449,7 +449,7 @@ LUA
             return true;
         }
 
-        logger()->debug('Redis metrics labelNames not identical', ['labelNames' => $labelNames, 'existingLabelValues' => $existingMetricLabelNames]);
+        logger()->debug('Redis metrics labelNames not identical', ['labelNames' => $labelNames, 'existingLabelNames' => $existingMetricLabelNames]);
 
         return false;
     }
