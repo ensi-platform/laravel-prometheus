@@ -429,6 +429,8 @@ LUA
                 return false;
             }
 
+            logger()->debug("Redis metrics remove metric={$data['type']}", [$data]);
+
             return $this->removeMetric($data['type'], $metric);
         }
 
@@ -447,6 +449,8 @@ LUA
             return true;
         }
 
+        logger()->debug('Redis metrics labelNames not identical', ['labelNames' => $labelNames, 'existingLabelValues' => $existingMetricLabelNames]);
+
         return false;
     }
 
@@ -461,6 +465,7 @@ LUA
                 count(array_diff($sample['labelValues'], $labelValues)) == 0 &&
                 (count(array_diff_key($labelValues, $sample['labelValues'])) > 0 || count(array_diff_key($sample['labelValues'], $labelValues)) > 0)
             ) {
+                logger()->debug('Redis metrics labelValues', ['labelValues' => $labelValues, 'existingLabelValues' => $sample['labelValues']]);
                 return true;
             }
         }
