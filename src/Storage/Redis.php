@@ -407,10 +407,6 @@ LUA
         );
     }
 
-    /**
-     * @param array $data
-     * @return bool|int
-     */
     private function removeMetricOnLabelDiff(array $data): bool
     {
         $metrics = match ($data['type']) {
@@ -426,12 +422,9 @@ LUA
                 continue;
             }
 
-            $labelDiff1 = count(array_diff($metric['labelNames'], $data['labelNames']));
-            $labelDiff2 = count(array_diff($data['labelNames'], $metric['labelNames']));
-
             if (
-                ($labelDiff1 == 0 && $labelDiff2 == 0) ||
-                ($labelDiff1 == count($metric['labelNames']) && $labelDiff2 == count($data['labelNames']))
+                $this->isMetricLabelNamesIdentical($data['labelNames'], $metric['labelNames']) &&
+                !$this->issetMetricWithSuchLabelValues($data['labelValues'], $metric['samples'] ?? [])
             ) {
                 return false;
             }
@@ -442,10 +435,40 @@ LUA
         return false;
     }
 
+    private function isMetricLabelNamesIdentical(array $labelNames, array $existingMetricLabelNames): bool
+    {
+        $labelDiff1 = count(array_diff($existingMetricLabelNames, $labelNames));
+        $labelDiff2 = count(array_diff($labelNames, $existingMetricLabelNames));
+
+        if (
+            ($labelDiff1 == 0 && $labelDiff2 == 0) ||
+            ($labelDiff1 == count($existingMetricLabelNames) && $labelDiff2 == count($labelNames))
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
     /**
-     * @param string $type
-     * @param array $data
-     * @return bool|int
+     * Существует ли метрика с таким же labelValues, но с разными ключами
+     */
+    private function issetMetricWithSuchLabelValues(array $labelValues, array $existingMetricSamples): bool
+    {
+        foreach ($existingMetricSamples as $sample) {
+            if (
+                count(array_diff($labelValues, $sample['labelValues'])) == 0 &&
+                count(array_diff($sample['labelValues'], $labelValues)) == 0 &&
+                (count(array_diff_key($labelValues, $sample['labelValues'])) > 0 || count(array_diff_key($sample['labelValues'], $labelValues)) > 0)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @throws \RedisException
      */
     public function removeMetric(string $type, array $data): bool
