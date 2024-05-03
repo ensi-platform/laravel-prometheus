@@ -71,7 +71,7 @@ class MetricsBagTest extends TestCase
         $this->assertBagContainsString($bag, "# HELP test_my_counter Super metric");
     }
 
-    public function labelsProvider(): array
+    public static function labelsProvider(): array
     {
         return [
             [[]],
