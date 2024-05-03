@@ -149,6 +149,7 @@ class MetricsBag
         }
 
         $renderer = new RenderTextFormat();
+
         try {
             return $renderer->render($this->getCollectors()->getMetricFamilySamples());
         } catch (\RedisException) {
@@ -182,6 +183,7 @@ class MetricsBag
             case array_key_exists('null-storage', $this->config):
                 return new NullStorage();
         }
+
         throw new InvalidArgumentException("Missing storage configuration");
     }
 
@@ -193,7 +195,7 @@ class MetricsBag
             return Redis::fromExistingConnection($redisConnection->client(), [
                 'bag' => $options['bag'],
             ]);
-        }  catch (\RedisException) {
+        } catch (\RedisException) {
             return new NullStorage();
         }
     }

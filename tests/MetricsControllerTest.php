@@ -17,8 +17,8 @@ class MetricsControllerTest extends TestCase
                     'namespace' => 'app',
                     'route' => 'metrics',
                     'memory' => true,
-                ]
-            ]
+                ],
+            ],
         ]);
 
         /** @var PrometheusManager $manager */
@@ -43,8 +43,8 @@ class MetricsControllerTest extends TestCase
                         'login' => 'user',
                         'password' => 'password',
                     ],
-                ]
-            ]
+                ],
+            ],
         ]);
 
         /** @var PrometheusManager $manager */
@@ -67,8 +67,8 @@ class MetricsControllerTest extends TestCase
                         'login' => 'user',
                         'password' => 'password',
                     ],
-                ]
-            ]
+                ],
+            ],
         ]);
 
         /** @var PrometheusManager $manager */

@@ -20,7 +20,7 @@ class PrometheusManagerTest extends TestCase
             'prometheus.bags' => [
                 'first' => [1],
                 'second' => [1],
-            ]
+            ],
         ]);
         $manager = resolve(PrometheusManager::class);
         $this->assertInstanceOf(MetricsBag::class, $manager->bag('second'));
@@ -52,8 +52,8 @@ class PrometheusManagerTest extends TestCase
                 'bags' => [
                     'first' => [1],
                     'second' => [1],
-                ]
-            ]
+                ],
+            ],
         ]);
         /** @var PrometheusManager $manager */
         $manager = resolve(PrometheusManager::class);
