@@ -1,4 +1,6 @@
 .idea
 vendor
-.phpunit.*
 composer.lock
+studio.json
+.phpunit.*
+.php-cs-fixer.cache

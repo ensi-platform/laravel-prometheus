@@ -71,7 +71,7 @@ class MetricsBagTest extends TestCase
         $this->assertBagContainsString($bag, "# HELP test_my_counter Super metric");
     }
 
-    public function labelsProvider(): array
+    public static function labelsProvider(): array
     {
         return [
             [[]],
@@ -104,7 +104,7 @@ class MetricsBagTest extends TestCase
             'memory' => true,
             'label_middlewares' => [
                 GlobalMiddleware::class,
-            ]
+            ],
         ]);
 
         $bag->counter('my_counter')->labels(array_keys($labels))->update(1, array_values($labels));
@@ -144,7 +144,7 @@ class MetricsBagTest extends TestCase
             'memory' => true,
             'label_middlewares' => [
                 GlobalMiddleware::class,
-            ]
+            ],
         ]);
 
         $bag->counter('my_counter')
@@ -206,28 +206,28 @@ class MetricsBagTest extends TestCase
         $this->assertHistogramState($bag, 'test_my_histogram', ["my_label" => "my-value"], 3, 1, [
             2 => 0,
             4 => 1,
-            "+Inf" => 1
+            "+Inf" => 1,
         ]);
 
         $bag->update('my_histogram', 5, ["my_label" => "my-value"]);
         $this->assertHistogramState($bag, 'test_my_histogram', ["my_label" => "my-value"], 8, 2, [
             2 => 0,
             4 => 1,
-            "+Inf" => 2
+            "+Inf" => 2,
         ]);
 
         $bag->update('my_histogram', 1, ["my_label" => "my-value"]);
         $this->assertHistogramState($bag, 'test_my_histogram', ["my_label" => "my-value"], 9, 3, [
             2 => 1,
             4 => 2,
-            "+Inf" => 3
+            "+Inf" => 3,
         ]);
 
         $bag->update('my_histogram', 50, ["my_label" => "my-value"]);
         $this->assertHistogramState($bag, 'test_my_histogram', ["my_label" => "my-value"], 59, 4, [
             2 => 1,
             4 => 2,
-            "+Inf" => 4
+            "+Inf" => 4,
         ]);
     }
 
@@ -236,6 +236,7 @@ class MetricsBagTest extends TestCase
         sort($values);
         $idealIndex = (count($values) - 1) * $level;
         $leftIndex = floor($idealIndex);
+
         return $values[$leftIndex];
     }
 
@@ -277,7 +278,7 @@ class MetricsBagTest extends TestCase
     public function testLabelMiddleware()
     {
         config([
-            'prometheus.app_name' => 'app-name'
+            'prometheus.app_name' => 'app-name',
         ]);
 
         $bag = new MetricsBag([
@@ -285,7 +286,7 @@ class MetricsBagTest extends TestCase
             'memory' => true,
             'label_middlewares' => [
                 AppNameLabelMiddleware::class,
-            ]
+            ],
         ]);
 
         $bag->counter('my_counter')->labels(['my_label']);
@@ -319,7 +320,7 @@ class MetricsBagTest extends TestCase
             'basic_auth' => [
                 'login' => 'user',
                 'password' => 'secret',
-            ]
+            ],
         ]);
 
         $this->assertTrue($bag->auth(Request::create("http://user:secret@localhost/metrics")));
@@ -335,7 +336,7 @@ class MetricsBagTest extends TestCase
             'memory' => true,
             'on_demand_metrics' => [
                 SomeOnDemandMetric::class,
-            ]
+            ],
         ]);
 
         $bag->processOnDemandMetrics();
@@ -348,7 +349,7 @@ class MetricsBagTest extends TestCase
         config([
             'prometheus' => [
                 'enabled' => false,
-            ]
+            ],
         ]);
 
         $bag = new MetricsBag([

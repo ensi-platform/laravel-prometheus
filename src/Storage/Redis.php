@@ -48,7 +48,7 @@ class Redis implements Adapter
     private $redis;
 
     /**
-     * @var boolean
+     * @var bool
      */
     private $connectionInitialized = false;
 
@@ -163,7 +163,7 @@ LUA
     {
         return implode(':', [
             $data['name'],
-            'meta'
+            'meta',
         ]);
     }
 
@@ -177,7 +177,7 @@ LUA
         return implode(':', [
             $data['name'],
             $this->encodeLabelValues($data['labelValues']),
-            'value'
+            'value',
         ]);
     }
 
@@ -192,6 +192,7 @@ LUA
         $metrics = array_merge($metrics, $this->collectGauges());
         $metrics = array_merge($metrics, $this->collectCounters());
         $metrics = array_merge($metrics, $this->collectSummaries());
+
         return array_map(
             function (array $metric): MetricFamilySamples {
                 return new MetricFamilySamples($metric);
@@ -263,6 +264,7 @@ LUA
         foreach ($data['buckets'] as $bucket) {
             if ($data['value'] <= $bucket) {
                 $bucketToIncrease = $bucket;
+
                 break;
             }
         }
@@ -366,7 +368,7 @@ LUA
                 json_encode($data['labelValues']),
                 $data['value'],
                 json_encode($metaData),
-                $wasRemoved
+                $wasRemoved,
             ],
             2
         );
@@ -504,7 +506,6 @@ LUA
         return $result;
     }
 
-
     /**
      * @param mixed[] $data
      * @return mixed[]
@@ -513,6 +514,7 @@ LUA
     {
         $metricsMetaData = $data;
         unset($metricsMetaData['value'], $metricsMetaData['command'], $metricsMetaData['labelValues']);
+
         return $metricsMetaData;
     }
 
@@ -590,6 +592,7 @@ LUA
             }
             $histograms[] = $histogram;
         }
+
         return $histograms;
     }
 
@@ -604,6 +607,7 @@ LUA
         if ($this->redis->getOption(\Redis::OPT_PREFIX) === null) {
             return $key;
         }
+
         // @phpstan-ignore-next-line false positive, phpstan thinks getOptions returns int
         return substr($key, strlen($this->redis->getOption(\Redis::OPT_PREFIX)));
     }
@@ -656,6 +660,7 @@ LUA
 
                 if (count($samples) === 0) {
                     $this->redis->del($valueKey);
+
                     continue;
                 }
 
@@ -693,6 +698,7 @@ LUA
                 $this->redis->del($metaKey);
             }
         }
+
         return $summaries;
     }
 
@@ -722,6 +728,7 @@ LUA
             });
             $gauges[] = $gauge;
         }
+
         return $gauges;
     }
 
@@ -751,6 +758,7 @@ LUA
             });
             $counters[] = $counter;
         }
+
         return $counters;
     }
 
@@ -792,6 +800,7 @@ LUA
         if (false === $json) {
             throw new RuntimeException(json_last_error_msg());
         }
+
         return base64_encode($json);
     }
 
@@ -810,6 +819,7 @@ LUA
         if (false === $decodedValues) {
             throw new RuntimeException(json_last_error_msg());
         }
+
         return $decodedValues;
     }
 }

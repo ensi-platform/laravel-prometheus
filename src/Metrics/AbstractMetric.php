@@ -13,7 +13,7 @@ abstract class AbstractMetric
     /** @var array<LabelMiddleware> */
     protected array $middlewares = [];
 
-    public abstract function update($value = 1, array $labelValues = []): void;
+    abstract public function update($value = 1, array $labelValues = []): void;
 
     public function labels(array $labels): self
     {
