@@ -8,19 +8,19 @@ use Illuminate\Support\ServiceProvider;
 
 class PrometheusServiceProvider extends ServiceProvider
 {
-    public function register()
+    public function register(): void
     {
+        $this->mergeConfigFrom(__DIR__ . '/../config/prometheus.php', 'prometheus');
+
         $this->app->singleton(PrometheusManager::class);
         $this->app->alias(PrometheusManager::class, 'prometheus');
-
-        $this->mergeConfigFrom(__DIR__.'/../config/prometheus.php', 'prometheus');
     }
 
-    public function boot()
+    public function boot(): void
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../config/prometheus.php' => config_path('prometheus.php'),
+                __DIR__ . '/../config/prometheus.php' => config_path('prometheus.php'),
             ], 'prometheus-config');
         }
 

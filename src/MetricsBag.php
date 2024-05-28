@@ -3,7 +3,6 @@
 namespace Ensi\LaravelPrometheus;
 
 use Ensi\LaravelPrometheus\LabelMiddlewares\LabelMiddleware;
-use Ensi\LaravelPrometheus\Metrics\AbstractMetric;
 use Ensi\LaravelPrometheus\Metrics\Counter;
 use Ensi\LaravelPrometheus\Metrics\Gauge;
 use Ensi\LaravelPrometheus\Metrics\Histogram;
@@ -26,9 +25,9 @@ class MetricsBag
     private ?CollectorRegistry $collectors = null;
     /** @var array<LabelMiddleware> */
     private array $middlewares = [];
-    /** @var array<AbstractMetric> */
+    /** @var array<Counter|Gauge|Histogram|Summary> */
     private array $metrics = [];
-    /** @var array<class-string> */
+    /** @var OnDemandMetric[] */
     private array $onDemandMetrics = [];
 
     public function __construct(private array $config)

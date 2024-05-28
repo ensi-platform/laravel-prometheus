@@ -18,7 +18,7 @@ use RuntimeException;
 
 class Redis implements Adapter
 {
-    const PROMETHEUS_METRIC_KEYS_SUFFIX = '_METRIC_KEYS';
+    public const PROMETHEUS_METRIC_KEYS_SUFFIX = '_METRIC_KEYS';
 
     /**
      * @var mixed[]
@@ -116,8 +116,8 @@ class Redis implements Adapter
      */
     public function getGlobalPrefix(): string
     {
+        /** @var mixed $globalPrefix */
         $globalPrefix = $this->redis->getOption(\Redis::OPT_PREFIX);
-        // @phpstan-ignore-next-line false positive, phpstan thinks getOptions returns int
         if (!is_string($globalPrefix)) {
             return '';
         }
@@ -477,11 +477,11 @@ LUA
     {
         $metricKeyForDelete = $this->getGlobalPrefix() . $this->prefix;
         $metricKeyForDelete .= match ($data['type']) {
-            Summary::TYPE => $type . implode(':', [self::PROMETHEUS_METRIC_KEYS_SUFFIX, $data['name']]). ':*',
+            Summary::TYPE => $type . implode(':', [self::PROMETHEUS_METRIC_KEYS_SUFFIX, $data['name']]) . ':*',
             default => ':' . implode(':', [$type, $data['name']]),
         };
 
-        $result =  boolval($this->redis->eval(
+        $result = boolval($this->redis->eval(
             <<<LUA
             local cursor = "0"
             local delResult = "0"

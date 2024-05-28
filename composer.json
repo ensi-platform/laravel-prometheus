@@ -1,8 +1,24 @@
 {
     "name": "ensi/laravel-prometheus",
-    "description": "",
+    "description": "laravel prometheus",
     "type": "library",
     "license": "MIT",
+    "require": {
+        "php": "^8.1",
+        "ext-redis": "*",
+        "laravel/framework": "^9.0 || ^10.0 || ^11.0",
+        "promphp/prometheus_client_php": "^2.6"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.2",
+        "nunomaduro/collision": "^6.0 || ^7.0 || ^8.1",
+        "pestphp/pest": "^1.22 || ^2.0",
+        "pestphp/pest-plugin-laravel": "^1.1 || ^2.0",
+        "phpstan/extension-installer": "^1.3",
+        "phpstan/phpstan": "^1.11",
+        "spaze/phpstan-disallowed-calls": "^2.15",
+        "orchestra/testbench": "^7.0 || ^8.0 || ^9.0"
+    },
     "autoload": {
         "psr-4": {
             "Ensi\\LaravelPrometheus\\": "src/"
@@ -13,18 +29,12 @@
             "Ensi\\LaravelPrometheus\\Tests\\": "tests/"
         }
     },
-    "minimum-stability": "stable",
-    "require": {
-        "php": ">=8.1",
-        "ext-redis": "*",
-        "promphp/prometheus_client_php": "^2.6",
-        "laravel/framework": "^9.0 || ^10.0 || ^11.0"
-    },
-    "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.2",
-        "orchestra/testbench": "^6.0||^7.0||^8.0||^9.0",
-        "phpunit/phpunit": "^9.0||^10.0||^11.0",
-        "php-parallel-lint/php-var-dump-check": "^0.5.0"
+    "scripts": {
+        "cs": "php-cs-fixer fix --config .php-cs-fixer.php",
+        "phpstan": "phpstan analyse",
+        "test": "./vendor/bin/pest --parallel --no-coverage",
+        "test-ci": "./vendor/bin/pest --no-coverage",
+        "test-coverage": "XDEBUG_MODE=coverage ./vendor/bin/pest --parallel --coverage"
     },
     "extra": {
         "laravel": {
@@ -33,8 +43,11 @@
             ]
         }
     },
-    "scripts": {
-        "cs": "php-cs-fixer fix --config .php-cs-fixer.php",
-        "test": "./vendor/bin/phpunit"
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        }
     }
 }
