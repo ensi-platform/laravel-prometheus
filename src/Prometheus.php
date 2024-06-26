@@ -14,11 +14,11 @@ use Illuminate\Support\Facades\Facade;
  * @method static void addMiddleware(string $labelProcessorClass, array $parameters = [])
  * @method static void addOnDemandMetric(string $onDemandMetricClass)
  *
- * @method static Counter counter(string $name, array $labels = [])
- * @method static Gauge gauge(string $name, array $labels = [])
- * @method static Histogram histogram(string $name, array $buckets, array $labels = [])
- * @method static Summary summary(string $name, int $maxAgeSeconds, array $quantiles, array $labels = [])
- * @method static void update(string $name, $value, array $labelValues)
+ * @method static Counter counter(string $name)
+ * @method static Gauge gauge(string $name)
+ * @method static Histogram histogram(string $name, array $buckets)
+ * @method static Summary summary(string $name, int $maxAgeSeconds, array $quantiles)
+ * @method static void update(string $name, $value, array $labelValues = [])
  *
  * @method static void processOnDemandMetrics()
  * @method static string dumpTxt()

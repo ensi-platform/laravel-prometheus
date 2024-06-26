@@ -5,15 +5,15 @@ namespace Ensi\LaravelPrometheus\Tests;
 use Ensi\LaravelPrometheus\PrometheusManager;
 use Illuminate\Support\Facades\Route;
 
-class ServiceProviderTest extends TestCase
-{
-    public function testManagerIsRegistered()
-    {
-        self::assertInstanceOf(PrometheusManager::class, resolve(PrometheusManager::class));
-    }
+use function PHPUnit\Framework\assertInstanceOf;
+use function PHPUnit\Framework\assertTrue;
 
-    public function testDefaultBagRouteIsRegistered()
-    {
-        $this->assertTrue(Route::has('prometheus.default'));
-    }
-}
+uses(TestCase::class);
+
+test('test manager is registered', function () {
+    assertInstanceOf(PrometheusManager::class, resolve(PrometheusManager::class));
+});
+
+test('test default bag route is registered', function () {
+    assertTrue(Route::has('prometheus.default'));
+});

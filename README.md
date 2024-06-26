@@ -1,24 +1,37 @@
 # Prometheus client for laravel
 
-[![tests](https://github.com/ensi-platform/laravel-prometheus/actions/workflows/tests.yml/badge.svg)](https://github.com/ensi-platform/laravel-prometheus/actions/workflows/tests.yml)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/ensi/laravel-prometheus.svg?style=flat-square)](https://packagist.org/packages/ensi/laravel-prometheus)
+[![Tests](https://github.com/ensi-platform/laravel-prometheus/actions/workflows/run-tests.yml/badge.svg?branch=master)](https://github.com/ensi-platform/laravel-prometheus/actions/workflows/run-tests.yml)
+[![Total Downloads](https://img.shields.io/packagist/dt/ensi/laravel-prometheus.svg?style=flat-square)](https://packagist.org/packages/ensi/laravel-prometheus)
 
-Адаптер для [promphp/prometheus_client_php](https://github.com/PromPHP/prometheus_client_php)
+Adapter for [promphp/prometheus_client_php](https://github.com/PromPHP/prometheus_client_php)
 
 ## Installation
 
-Добавьте пакет в приложение
+You can install the package via composer:
+
 ```bash
 composer require ensi/laravel-prometheus
 ```
 
-Скопируйте конфигурацию для дальнейшей настройки
+Publish the config with:
+
 ```bash
-php artisan vendor:publish --tag=prometheus-config
+php artisan vendor:publish --provider="Ensi\LaravelPrometheus\PrometheusServiceProvider"
 ```
 
-## Usage
+## Version Compatibility
 
-Перед тем как накручивать счётчики метрик, их надо зарегистрировать. Лучше всего это делать в методе boot() в AppServiceProvider.
+| Laravel Prometheus | Laravel                    | PHP  |
+|--------------------|----------------------------|------|
+| ^1.0.0             | ^9.x                       | ^8.1 |
+| ^1.0.4             | ^9.x \|\| ^10.x            | ^8.1 |
+| ^1.0.9             | ^9.x \|\| ^10.x \|\| ^11.x | ^8.1 |
+
+## Basic Usage
+
+Before you wind up the metric counters, you need to register them. The best thing to do is to use the boot() method from the application service provider.
+
 ```php
 # app/Providers/AppServiceProvider.php
 public function boot() {
@@ -26,7 +39,7 @@ public function boot() {
     Prometheus::summary('http_requests_duration_seconds', 60, [0.5, 0.95, 0.99]);
 }
 ```
-Обновить значение счётчика так же просто
+Updating the counter value is just as easy
 ```php
 # app/Http/Middleware/Telemetry.php
 public function handle($request, Closure $next)
@@ -44,7 +57,7 @@ public function handle($request, Closure $next)
 
 ## Configuration
 
-Структура файла конфигурации
+The structure of the configuration file
 
 ```php
 # config/prometheus.php
@@ -76,34 +89,32 @@ return [
 
 **Bag**
 
-Вы можете захотеть иметь несколько наборов метрик, например один набор с техническими метриками, вроде количества http запросов или непойманных исключений,
-и второй для бизнес-значений вроде количества заказов или показов определённой страницы.
-Для этого вводится понятие bag. 
-Вы можете настроить несколько бэгов, указав для каждого своё хранилище данных, отдельный эндпоинт для сбора метрик и т.д.
+You may want to have several sets of metrics, for example, one set with technical metrics, such as the number of http requests or unexpected exceptions, and a second set for business values, such as the number of orders or impressions of a particular page.
+To do this, the concept of bag is introduced.
+You can configure several bugs by specifying your own data warehouse for each, a separate endpoint for collecting metrics, etc.
 
 **Storage type**
 
-Вы можете использовать все хранилища (Adapters) из пакета promphp/prometheus_client_php. Кроме того вы можете указать имя
-redis connection'a из файла `config/databases.php`.
+You can use all the storage (Adapters) from the promphp/prometheus_client_php package. In addition, you can specify the name of the redis connection from the file `config/databases.php`.
 
-Варианты настройки хранилища.  
-Хранить метрики в памяти процесса.
+Storage configuration options.  
+Store metrics in the process memory.
 ```php
 'memory' => true
 ```
-Использовать APCu
+Use apcupsd
 ```php
 'apcu' => [
     'prefix' => 'metrics'
 ]
 ```
-или альтернативный адаптер APCuNG
+or an alternative APCuNG adapter
 ```php
 'apcu-ng' => [
     'prefix' => 'metrics'
 ]
 ```
-Redis адаптер, который сам создаст phpredis соединение
+A Redis adapter that will create a phpredis connection by itself
 ```php
 'redis' => [
     'host' => '127.0.0.1',
@@ -116,8 +127,7 @@ Redis адаптер, который сам создаст phpredis соедин
     'bag' => 'my-metrics-bag'
 ]
 ```
-Laravel Redis соединение из `config/databases.php`. Под капотом будет создан тот же Redis адаптер,
-но он возьмёт нативный объект соединения phpredis из RedisManager'a ларавеля.
+Laravel Redis connection from `config/databases.php`. The same Redis adapter will be created under the hood, but it will take the native phpredis connection object from laravel's Redismanager.
 ```php
 'connection' => [
     'connection' => 'default',
@@ -125,7 +135,8 @@ Laravel Redis соединение из `config/databases.php`. Под капо�
 ]
 ```
 ## Advanced Usage
-Выбрать другой bag для создания и обновления в нём метрик можно через метод `bag($bagName)`.
+
+You can select another bag to create and update metrics in it using the `bag($bagName)` method.
 ```php
 # app/Providers/AppServiceProvider.php
 public function boot() {
@@ -142,11 +153,9 @@ public function execute(Order $order) {
 
 ### Label Middlewares
 
-Вы можете добавить лейбл ко всем метрикам bag'a указав в его конфигурации т.н. Label middleware. Label middleware 
-срабатывает в момент определения метрики и в момент обновления её счётчика, добавляя в первом случае на название лейбла, 
-а во втором значение.  
+You can add a label to all bagmetrics by specifying the so-called Label middleware in its configuration. Label middleware is triggered at the moment the metric is determined and at the moment its counter is updated, adding in the first case to the label name, and in the second case the value.
 
-Например у намс есть TenantLabelProvider
+For example, we have a TenantLabelProvider
 ```php
 class TenantLabelMiddleware implements LabelMiddleware
 {
@@ -161,7 +170,7 @@ class TenantLabelMiddleware implements LabelMiddleware
     }
 }
 ```
-Регистрируем его в конфигурации bag'a.
+We register it in the bag configuration.
 ```php
 # config/prometheus.php
 return [
@@ -176,23 +185,22 @@ return [
     ],
 ];
 ```
-Далее как обычно работаем с метриками.
+Then, as usual, we work with metrics.
 ```php
 Prometheus::counter('http_requests_count')->labels(['endpoint', 'code']);
 // ...
 Prometheus::update('http_requests_count', 1, [Route::current()?->uri, $response->status()]);
 ```
-В результате метрика будет иметь не два, а три лейбла
+As a result, the metric will have not two, but three labels
 ```
 app_http_requests_count{endpoint="catalog/products",code="200",tenant="JBZ-987-H6"} 987
 ```
 
 ### On demand metrics
 
-Иногда метрики не привязаны к событиям приложения. Обычно это метрики типа gauge, которые нет смысла обновлять на каждом входящем запросе,
-т.к. прометеус всё-равно заберёт только последнее установленное значение.
-Такие метрики можно рассчитывать в момент сбора метрик прометеусом.
-Для этого вам нужно создать т.н. on demand метрику. Это класс, в котором вы регистрируете метрики и устанавливаете в них значения.
+Sometimes metrics are not linked to application events. Usually these are metrics of the gauge type, which it makes no sense to update on each incoming request, because prometheus will still take only the last set value.
+Such metrics can be calculated at the time of collection of metrics by prometheus.
+To do this, you need to create a so-called on demand metric. This is the class in which you register metrics and set values in them.
 ```php
 class QueueLengthOnDemandMetric extends OnDemandMetric {
     public function register(MetricsBag $metricsBag): void
@@ -206,7 +214,21 @@ class QueueLengthOnDemandMetric extends OnDemandMetric {
     }
 }
 ```
-Обновление таких метрик происходит в момент обращения прометеуса к эндпоинту получения метрик.
+The update of such metrics occurs at the moment prometheus addresses the endpoint of obtaining metrics.
+
+## Contributing
+
+Please see [CONTRIBUTING](.github/CONTRIBUTING.md) for details.
+
+### Testing
+
+1. composer install
+2. composer test
+
+## Security Vulnerabilities
+
+Please review [our security policy](.github/SECURITY.md) on how to report security vulnerabilities.
 
 ## License
-Laravel Prometheus is open-sourced software licensed under the [MIT license](LICENSE.md).
+
+The MIT License (MIT). Please see [License File](LICENSE.md) for more information.

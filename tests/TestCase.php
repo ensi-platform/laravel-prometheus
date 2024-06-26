@@ -2,12 +2,15 @@
 
 namespace Ensi\LaravelPrometheus\Tests;
 
-class TestCase extends \Orchestra\Testbench\TestCase
+use Ensi\LaravelPrometheus\PrometheusServiceProvider;
+use Orchestra\Testbench\TestCase as Orchestra;
+
+class TestCase extends Orchestra
 {
-    protected function getPackageProviders($app)
+    protected function getPackageProviders($app): array
     {
         return [
-            \Ensi\LaravelPrometheus\PrometheusServiceProvider::class,
+            PrometheusServiceProvider::class,
         ];
     }
 }
