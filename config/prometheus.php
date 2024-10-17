@@ -2,7 +2,7 @@
 
 return [
     'default_bag' => 'default',
-    'enabled' => env('PROMETHEUS_ENABLED', true),
+    'enabled' => env('PROMETHEUS_ENABLED', false),
     'app_name' => env('PROMETHEUS_APP_NAME', env('APP_NAME')),
     'bags' => [
         'default' => [
@@ -12,10 +12,19 @@ return [
                 'login' => env('PROMETHEUS_AUTH_LOGIN'),
                 'password' => env('PROMETHEUS_AUTH_PASSWORD'),
             ],
-            'connection' => [
-                'connection' => 'default',
-                'bag' => 'default',
-            ],
+            // setup your storage
+//            'connection' => [
+//                'connection' => 'default',
+//                'bag' => 'default',
+//            ],
+//            or
+//            'apcu-ng' => [
+//                'prefix' => 'metrics'
+//            ],
+//            or
+//            'apcu' => [
+//                'prefix' => 'metrics'
+//            ],
             'label_middlewares' => [
                 // \Ensi\LaravelPrometheus\LabelMiddlewares\AppNameLabelMiddleware::class,
             ],
