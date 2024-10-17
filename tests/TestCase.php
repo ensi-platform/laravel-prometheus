@@ -13,4 +13,12 @@ class TestCase extends Orchestra
             PrometheusServiceProvider::class,
         ];
     }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config()->set('prometheus.bags.default.connection', ['connection' => 'default', 'bag' => 'default']);
+        config()->set('prometheus.enabled', true);
+    }
 }
