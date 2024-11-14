@@ -9,6 +9,7 @@ use Ensi\LaravelPrometheus\Metrics\Histogram;
 use Ensi\LaravelPrometheus\Metrics\Summary;
 use Ensi\LaravelPrometheus\OnDemandMetrics\OnDemandMetric;
 use Ensi\LaravelPrometheus\Storage\NullStorage;
+use Ensi\LaravelPrometheus\Storage\OctaneCache;
 use Ensi\LaravelPrometheus\Storage\Redis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis as RedisManager;
@@ -179,6 +180,8 @@ class MetricsBag
                 return new APCng($this->config['apcu-ng']['prefix']);
             case array_key_exists('memory', $this->config):
                 return new InMemory();
+            case array_key_exists('octane-cache', $this->config):
+                return new OctaneCache($this->config['octane-cache']['prefix']);
             case array_key_exists('null-storage', $this->config):
                 return new NullStorage();
         }
