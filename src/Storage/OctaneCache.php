@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Ensi\LaravelPrometheus\Storage;
 
+use Illuminate\Support\Arr;
+use Laravel\Octane\Facades\Octane;
 use Prometheus\Exception\StorageException;
 use Prometheus\Math;
 use Prometheus\MetricFamilySamples;
 use Prometheus\Storage\Adapter;
 use RuntimeException;
 use Swoole\Table;
-use Laravel\Octane\Facades\Octane;
-use Illuminate\Support\Arr;
 
 class OctaneCache implements Adapter
 {
@@ -48,7 +48,6 @@ class OctaneCache implements Adapter
         $this->histogramValues = Octane::table('histogram_values');
     }
 
-
     /**
      * @return MetricFamilySamples[]
      * @throws StorageException
@@ -63,24 +62,23 @@ class OctaneCache implements Adapter
         return $metrics;
     }
 
-
     /**
      * @param mixed[] $data
      * @throws StorageException
      */
     public function updateHistogram(array $data): void
     {
-       // Initialize the sum
+        // Initialize the sum
         $metaKey = $this->metaKey($data);
         $metaKeyValue = $this->histograms->get($metaKey);
-        
-        if(!$metaKeyValue) {
+
+        if (!$metaKeyValue) {
             $metaKeyValue = [
                 'meta' => $this->metaData($data),
                 'valueKeys' => '',
             ];
         }
-        
+
         $sumKey = $this->histogramBucketValueKey($data, 'sum');
         $sumValue = $this->histogramValues->get($sumKey) ?? 0;
         if (!$sumValue) {
@@ -95,6 +93,7 @@ class OctaneCache implements Adapter
         foreach ($data['buckets'] as $bucket) {
             if ($data['value'] <= $bucket) {
                 $bucketToIncrease = $bucket;
+
                 break;
             }
         }
@@ -102,8 +101,8 @@ class OctaneCache implements Adapter
         $bucketKey = $this->histogramBucketValueKey($data, $bucketToIncrease);
         $bucketValue = $this->histogramValues->get($bucketKey) ?? 0;
         if (!$bucketValue) {
-                $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $bucketKey);
-                $bucketValue = 0;
+            $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $bucketKey);
+            $bucketValue = 0;
         }
         $bucketValue += 1;
 
@@ -120,7 +119,7 @@ class OctaneCache implements Adapter
         $valueKey = $this->valueKey($data);
 
         $metaKeyValue = $this->gauges->get($metaKey);
-        if(!$metaKeyValue) {
+        if (!$metaKeyValue) {
             $metaKeyValue = [
                 'meta' => $this->metaData($data),
                 'valueKeys' => '',
@@ -134,7 +133,7 @@ class OctaneCache implements Adapter
                 'sampleKeys' => '',
             ];
         }
-        
+
         $this->summaryValues->set($valueKey, [
             'labelValues' => $this->encodeLabelValues($data['labelValues']),
             'sampleTimes' => $this->implodeKeysString($summaryValue['sampleTimes'], (string) time()),
@@ -149,10 +148,10 @@ class OctaneCache implements Adapter
      * @throws StorageException
      */
     public function updateGauge(array $data): void
-    {        
+    {
         $metaKey = $this->metaKey($data);
         $valueKey = $this->valueKey($data);
-        
+
         $metaKeyValue = $this->gauges->get($metaKey);
         if (!$metaKeyValue) {
             $metaKeyValue = [
@@ -163,7 +162,7 @@ class OctaneCache implements Adapter
         if (!$this->gaugeValues->get($valueKey)) {
             $value = 0;
         }
-        if( !$this->gaugeValues->get($valueKey)) {
+        if (!$this->gaugeValues->get($valueKey)) {
             $value = $this->gaugeValues->get($valueKey) ?? 0;
             $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $valueKey);
         }
@@ -184,7 +183,7 @@ class OctaneCache implements Adapter
     {
         $metaKey = $this->metaKey($data);
         $valueKey = $this->valueKey($data);
-        
+
         $metaKeyValue = $this->сounters->get($metaKey);
         if (!$metaKeyValue) {
             $metaKeyValue = [
@@ -195,7 +194,7 @@ class OctaneCache implements Adapter
         if (!$this->сounterValues->get($valueKey)) {
             $value = 0;
         }
-        if( !$this->сounterValues->get($valueKey)) {
+        if (!$this->сounterValues->get($valueKey)) {
             $value = $this->сounterValues->get($valueKey) ?? 0;
             $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $valueKey);
         }
@@ -282,10 +281,10 @@ class OctaneCache implements Adapter
             }
             $histograms[] = new MetricFamilySamples($data);
         }
+
         return $histograms;
     }
 
-  
     /**
      * @return MetricFamilySamples[]
      */
@@ -314,8 +313,8 @@ class OctaneCache implements Adapter
                 $summaryValue = $this->summaryValues->get($valueKey);
                 $sampleTimes = explode('::', $summaryValue['sampleTimes']);
                 $values = Arr::mapWithKeys(
-                    explode('::', $summaryValue['sampleValues']), 
-                    fn($sampleValue, $key) => ['value' => (float) $sampleValue, 'time' => (int) $sampleTimes[$key]]
+                    explode('::', $summaryValue['sampleValues']),
+                    fn ($sampleValue, $key) => ['value' => (float) $sampleValue, 'time' => (int) $sampleTimes[$key]]
                 );
 
                 // Remove old data
@@ -332,6 +331,7 @@ class OctaneCache implements Adapter
                     if ($value1['value'] === $value2['value']) {
                         return 0;
                     }
+
                     return ($value1['value'] < $value2['value']) ? -1 : 1;
                 });
 
@@ -367,6 +367,7 @@ class OctaneCache implements Adapter
                 $this->summaries->del($metaKey);
             }
         }
+
         return $summaries;
     }
 
@@ -389,7 +390,7 @@ class OctaneCache implements Adapter
                 $value = $this->gaugeValues->get($valueKey, 'value');
                 $parts = explode(':', $valueKey);
                 $labelValues = $parts[2];
-                $data['samples'][] = [ 
+                $data['samples'][] = [
                     'name' => $metaData['name'],
                     'labelNames' => [],
                     'labelValues' => $this->decodeLabelValues($labelValues),
@@ -403,6 +404,7 @@ class OctaneCache implements Adapter
 
             $this->сounters->del($key);
         }
+
         return $result;
     }
 
@@ -436,9 +438,10 @@ class OctaneCache implements Adapter
             }
 
             $result[] = new MetricFamilySamples($data);
-            
+
             $this->сounters->del($key);
         }
+
         return $result;
     }
 
@@ -485,22 +488,22 @@ class OctaneCache implements Adapter
     {
         return implode('::', [
             $keys,
-            $key
+            $key,
         ]);
     }
 
-     /**
-     * @param mixed[] $data
-     *
-     * @return string
-     */
+    /**
+    * @param mixed[] $data
+    *
+    * @return string
+    */
     protected function metaKey(array $data): string
     {
         return implode(':', [
             $this->prometheusPrefix,
             $data['type'],
             $data['name'],
-            'meta'
+            'meta',
         ]);
     }
 
@@ -512,6 +515,7 @@ class OctaneCache implements Adapter
     {
         $metricsMetaData = $data;
         unset($metricsMetaData['value'], $metricsMetaData['command'], $metricsMetaData['labelValues']);
+
         return json_encode($metricsMetaData);
     }
 
@@ -530,11 +534,11 @@ class OctaneCache implements Adapter
         return base64_encode($json);
     }
 
-     /**
-     * @param string $values
-     * @return mixed[]
-     * @throws RuntimeException
-     */
+    /**
+    * @param string $values
+    * @return mixed[]
+    * @throws RuntimeException
+    */
     private function decodeLabelValues(string $values): array
     {
         $json = base64_decode($values, true);
@@ -549,7 +553,7 @@ class OctaneCache implements Adapter
         return $decodedValues;
     }
 
-        /**
+    /**
      * @param mixed[]    $data
      * @param string|int $bucket
      *
