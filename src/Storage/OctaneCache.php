@@ -472,8 +472,7 @@ class OctaneCache implements Adapter
     private function clearTable(Table $table): void
     {
         $table->rewind();
-        while ($table->valid())
-        {
+        while ($table->valid()) {
             $table->del($table->key());
             $table->next();
         }
