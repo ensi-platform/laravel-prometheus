@@ -452,17 +452,31 @@ class OctaneCache implements Adapter
      */
     public function wipeStorage(): void
     {
-        $this->gauges->destroy();
-        $this->gaugeValues->destroy();
+        $this->clearTable($this->gauges);
+        $this->clearTable($this->gaugeValues);
 
-        $this->сounters->destroy();
-        $this->сounterValues->destroy();
+        $this->clearTable($this->сounters);
+        $this->clearTable($this->сounterValues);
 
-        $this->summaries->destroy();
-        $this->summaryValues->destroy();
+        $this->clearTable($this->summaries);
+        $this->clearTable($this->summaryValues);
 
-        $this->histograms->destroy();
-        $this->histogramValues->destroy();
+        $this->clearTable($this->histograms);
+        $this->clearTable($this->histogramValues);
+    }
+
+    /**
+     * @param Table $table
+     * @return void
+     */
+    private function clearTable(Table $table): void
+    {
+        $table->rewind();
+        while ($table->valid())
+        {
+            $table->del($table->key());
+            $table->next();
+        }
     }
 
     /**
