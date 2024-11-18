@@ -481,13 +481,13 @@ class OctaneCache implements Adapter
      */
     private function valueKey(array $data): string
     {
-        return implode(':', [
+        return hash('md5', implode(':', [
             $this->prometheusPrefix,
             $data['type'],
             $data['name'],
             $this->encodeLabelValues($data['labelValues']),
             'value',
-        ]);
+        ]));
     }
 
     /**
@@ -509,12 +509,12 @@ class OctaneCache implements Adapter
     */
     protected function metaKey(array $data): string
     {
-        return implode(':', [
+        return hash('md5', implode(':', [
             $this->prometheusPrefix,
             $data['type'],
             $data['name'],
             'meta',
-        ]);
+        ]));
     }
 
     /**
