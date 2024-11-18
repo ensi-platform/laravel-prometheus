@@ -159,17 +159,16 @@ class OctaneCache implements Adapter
                 'valueKeys' => '',
             ];
         }
-        if (!$this->gaugeValues->get($valueKey)) {
-            $value = 0;
-        }
-        if (!$this->gaugeValues->get($valueKey)) {
-            $value = $this->gaugeValues->get($valueKey) ?? 0;
+
+        $value = $this->сounterValues->get($valueKey);     
+        if (!$value) {
+            $value = ['value' => 0];
             $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $valueKey);
         }
         if ($data['command'] === Adapter::COMMAND_SET) {
             $this->gaugeValues->set($valueKey, ['value' => $data['value']]);
         } else {
-            $this->gaugeValues->set($valueKey, ['value' => $value + $data['value']]);
+            $this->gaugeValues->set($valueKey, ['value' => $value['value'] + $data['value']]);
         }
 
         $this->gauges->set($metaKey, $metaKeyValue);
@@ -191,14 +190,15 @@ class OctaneCache implements Adapter
                 'valueKeys' => '',
             ];
         }
-        $value = $this->сounterValues->get($valueKey) ?? 0;
+        $value = $this->сounterValues->get($valueKey);
         if (!$value) {
+            $value = ['value' => 0];
             $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $valueKey);
         }
         if ($data['command'] === Adapter::COMMAND_SET) {
             $this->сounterValues->set($valueKey, ['value' => 0]);
         } else {
-            $this->сounterValues->set($valueKey, ['value' => $value + $data['value']]);
+            $this->сounterValues->set($valueKey, ['value' => $value['value'] + $data['value']]);
         }
 
         $this->сounters->set($metaKey, $metaKeyValue);
