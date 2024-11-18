@@ -191,11 +191,8 @@ class OctaneCache implements Adapter
                 'valueKeys' => '',
             ];
         }
-        if (!$this->сounterValues->get($valueKey)) {
-            $value = 0;
-        }
-        if (!$this->сounterValues->get($valueKey)) {
-            $value = $this->сounterValues->get($valueKey) ?? 0;
+        $value = $this->сounterValues->get($valueKey) ?? 0;
+        if (!$value) {
             $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $valueKey);
         }
         if ($data['command'] === Adapter::COMMAND_SET) {
