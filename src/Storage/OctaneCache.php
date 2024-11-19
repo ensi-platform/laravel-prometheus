@@ -408,14 +408,14 @@ class OctaneCache implements Adapter
                 'samples' => [],
             ];
             foreach (explode('::', $metric['valueKeys']) as $valueKey) {
-                $value = $this->gaugeValues->get($valueKey, 'value');
+                $value = $this->gaugeValues->get($valueKey);
                 $parts = explode(':', $value['key']);
                 $labelValues = $parts[2];
                 $data['samples'][] = [
                     'name' => $metaData['name'],
                     'labelNames' => [],
                     'labelValues' => $this->decodeLabelValues($labelValues),
-                    'value' => $value,
+                    'value' => $value['value'],
                 ];
 
                 $this->gaugeValues->del($valueKey);
@@ -445,14 +445,14 @@ class OctaneCache implements Adapter
                 'samples' => [],
             ];
             foreach (explode('::', $metric['valueKeys']) as $valueKey) {
-                $value = $this->сounterValues->get($valueKey, 'value');
+                $value = $this->сounterValues->get($valueKey);
                 $parts = explode(':', $value['key']);
                 $labelValues = $parts[2];
                 $data['samples'][] = [
                     'name' => $metaData['name'],
                     'labelNames' => [],
                     'labelValues' => $this->decodeLabelValues($labelValues),
-                    'value' => $value,
+                    'value' => $value['value'],
                 ];
 
                 $this->сounterValues->del($valueKey);
