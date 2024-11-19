@@ -87,9 +87,9 @@ class OctaneCache implements Adapter
             $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $sumKeyHash);
             $sumValue = [
                 'value' => 0,
-                'key' => $sumKey
+                'key' => $sumKey,
             ];
-        } 
+        }
         $sumValue['value'] += $data['value'];
         $this->histogramValues->set($sumKeyHash, $sumValue);
 
@@ -111,7 +111,7 @@ class OctaneCache implements Adapter
             $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $bucketKeyHash);
             $bucketValue = [
                 'value' => 0,
-                'key' => $bucketKey
+                'key' => $bucketKey,
             ];
         }
         $bucketValue['value'] += 1;
@@ -180,7 +180,7 @@ class OctaneCache implements Adapter
             $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $valueKeyHash);
             $gaugeValue = [
                 'value' => 0,
-                'key' => $valueKey
+                'key' => $valueKey,
             ];
         }
         if ($data['command'] === Adapter::COMMAND_SET) {
@@ -188,7 +188,7 @@ class OctaneCache implements Adapter
         } else {
             $gaugeValue['value'] += $data['value'];
         }
-        
+
         $this->gaugeValues->set($valueKeyHash, $gaugeValue);
         $this->gauges->set($metaKeyHash, $metaKeyValue);
     }
@@ -216,7 +216,7 @@ class OctaneCache implements Adapter
             $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $valueKeyHash);
             $сounterValue = [
                 'value' => 0,
-                'key' => $valueKey
+                'key' => $valueKey,
             ];
         }
         if ($data['command'] === Adapter::COMMAND_SET) {
