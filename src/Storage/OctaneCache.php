@@ -175,7 +175,7 @@ class OctaneCache implements Adapter
             ];
         }
 
-        $gaugeValue = $this->gaugeValues->get($valueKey);
+        $gaugeValue = $this->gaugeValues->get($valueKeyHash);
         if (!$gaugeValue) {
             $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $valueKeyHash);
             $gaugeValue = [
