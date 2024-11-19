@@ -20,6 +20,7 @@ return [
         ],
         'gauge_values:100000' => [
             'value' => 'float',
+            'key' => 'string:100000',
         ],
         
         'сounters:1000' => [
@@ -28,6 +29,7 @@ return [
         ],
         'сounter_values:100000' => [
             'value' => 'float',
+            'key' => 'string:100000',
         ],
 
         'summaries:1000' => [
@@ -35,7 +37,7 @@ return [
             'valueKeys' => 'string:10000',
         ],
         'summary_values:100000' => [
-            'labelValues' => 'string:10000',
+            'key' => 'string:100000',
             'sampleTimes' => 'string:10000',
             'sampleValues' => 'string:10000',
         ],
@@ -46,6 +48,7 @@ return [
         ],
         'histogram_values:100000' => [
             'value' => 'float',
+            'key' => 'string:100000',
         ],
     ],
 ];

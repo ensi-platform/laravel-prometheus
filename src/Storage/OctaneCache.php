@@ -70,7 +70,8 @@ class OctaneCache implements Adapter
     {
         // Initialize the sum
         $metaKey = $this->metaKey($data);
-        $metaKeyValue = $this->histograms->get($metaKey);
+        $metaKeyHash = hash('md5', $metaKey);
+        $metaKeyValue = $this->histograms->get($metaKeyHash);
 
         if (!$metaKeyValue) {
             $metaKeyValue = [
@@ -80,13 +81,18 @@ class OctaneCache implements Adapter
         }
 
         $sumKey = $this->histogramBucketValueKey($data, 'sum');
-        $sumValue = $this->histogramValues->get($sumKey) ?? 0;
+        $sumKeyHash = hash('md5', $sumKey);
+        $sumValue = $this->histogramValues->get($sumKeyHash);
         if (!$sumValue) {
-            $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $sumKey);
-            $histogramValue = 0;
-        }
+            $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $sumKeyHash);
+            $sumValue = [
+                'value' => 0,
+                'key' => $sumKey
+            ];
+        } 
+        $sumValue['value'] += $data['value'];
+        $this->histogramValues->set($sumKeyHash, $sumValue);
 
-        $histogramValue += $data['value'];
 
 
         $bucketToIncrease = '+Inf';
@@ -99,14 +105,19 @@ class OctaneCache implements Adapter
         }
 
         $bucketKey = $this->histogramBucketValueKey($data, $bucketToIncrease);
-        $bucketValue = $this->histogramValues->get($bucketKey) ?? 0;
+        $bucketKeyHash = hash('md5', $bucketKey);
+        $bucketValue = $this->histogramValues->get($bucketKeyHash);
         if (!$bucketValue) {
-            $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $bucketKey);
-            $bucketValue = 0;
+            $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $bucketKeyHash);
+            $bucketValue = [
+                'value' => 0,
+                'key' => $bucketKey
+            ];
         }
-        $bucketValue += 1;
+        $bucketValue['value'] += 1;
+        $this->histogramValues->set($bucketKeyHash, $bucketValue);
 
-        $this->summaries->set($metaKey, $metaKeyValue);
+        $this->summaries->set($metaKeyHash, $metaKeyValue);
     }
 
     /**
@@ -116,9 +127,11 @@ class OctaneCache implements Adapter
     public function updateSummary(array $data): void
     {
         $metaKey = $this->metaKey($data);
+        $metaKeyHash = hash('md5', $metaKey);
         $valueKey = $this->valueKey($data);
+        $valueKeyHash = hash('md5', $valueKey);
 
-        $metaKeyValue = $this->gauges->get($metaKey);
+        $metaKeyValue = $this->gauges->get($metaKeyHash);
         if (!$metaKeyValue) {
             $metaKeyValue = [
                 'meta' => $this->metaData($data),
@@ -126,21 +139,21 @@ class OctaneCache implements Adapter
             ];
         }
 
-        $summaryValue = $this->summaryValues->get($valueKey);
+        $summaryValue = $this->summaryValues->get($valueKeyHash);
         if (!$summaryValue) {
-            $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $valueKey);
+            $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $valueKeyHash);
             $summaryValue = [
-                'sampleKeys' => '',
+                'key' => $valueKey,
+                'sampleTimes' => '',
+                'sampleValues' => '',
             ];
         }
 
-        $this->summaryValues->set($valueKey, [
-            'labelValues' => $this->encodeLabelValues($data['labelValues']),
-            'sampleTimes' => $this->implodeKeysString($summaryValue['sampleTimes'], (string) time()),
-            'sampleValues' => $this->implodeKeysString($summaryValue['sampleValues'], (string) $data['value']),
-        ]);
+        $summaryValue['sampleTimes'] = $this->implodeKeysString($summaryValue['sampleTimes'], (string) time());
+        $summaryValue['sampleValues'] = $this->implodeKeysString($summaryValue['sampleValues'], (string) $data['value']);
 
-        $this->summaries->set($metaKey, $metaKeyValue);
+        $this->summaryValues->set($valueKeyHash, $summaryValue);
+        $this->summaries->set($metaKeyHash, $metaKeyValue);
     }
 
     /**
@@ -150,9 +163,11 @@ class OctaneCache implements Adapter
     public function updateGauge(array $data): void
     {
         $metaKey = $this->metaKey($data);
+        $metaKeyHash = hash('md5', $metaKey);
         $valueKey = $this->valueKey($data);
+        $valueKeyHash = hash('md5', $valueKey);
 
-        $metaKeyValue = $this->gauges->get($metaKey);
+        $metaKeyValue = $this->gauges->get($metaKeyHash);
         if (!$metaKeyValue) {
             $metaKeyValue = [
                 'meta' => $this->metaData($data),
@@ -160,18 +175,22 @@ class OctaneCache implements Adapter
             ];
         }
 
-        $value = $this->сounterValues->get($valueKey);
-        if (!$value) {
-            $value = ['value' => 0];
-            $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $valueKey);
+        $gaugeValue = $this->gaugeValues->get($valueKey);
+        if (!$gaugeValue) {
+            $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $valueKeyHash);
+            $gaugeValue = [
+                'value' => 0,
+                'key' => $valueKey
+            ];
         }
         if ($data['command'] === Adapter::COMMAND_SET) {
-            $this->gaugeValues->set($valueKey, ['value' => $data['value']]);
+            $gaugeValue['value'] = $data['value'];
         } else {
-            $this->gaugeValues->set($valueKey, ['value' => $value['value'] + $data['value']]);
+            $gaugeValue['value'] += $data['value'];
         }
-
-        $this->gauges->set($metaKey, $metaKeyValue);
+        
+        $this->gaugeValues->set($valueKeyHash, $gaugeValue);
+        $this->gauges->set($metaKeyHash, $metaKeyValue);
     }
 
     /**
@@ -181,27 +200,33 @@ class OctaneCache implements Adapter
     public function updateCounter(array $data): void
     {
         $metaKey = $this->metaKey($data);
+        $metaKeyHash = hash('md5', $metaKey);
         $valueKey = $this->valueKey($data);
+        $valueKeyHash = hash('md5', $valueKey);
 
-        $metaKeyValue = $this->сounters->get($metaKey);
+        $metaKeyValue = $this->сounters->get($metaKeyHash);
         if (!$metaKeyValue) {
             $metaKeyValue = [
                 'meta' => $this->metaData($data),
                 'valueKeys' => '',
             ];
         }
-        $value = $this->сounterValues->get($valueKey);
-        if (!$value) {
-            $value = ['value' => 0];
-            $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $valueKey);
+        $сounterValue = $this->сounterValues->get($valueKeyHash);
+        if (!$сounterValue) {
+            $metaKeyValue['valueKeys'] = $this->implodeKeysString($metaKeyValue['valueKeys'], $valueKeyHash);
+            $сounterValue = [
+                'value' => 0,
+                'key' => $valueKey
+            ];
         }
         if ($data['command'] === Adapter::COMMAND_SET) {
-            $this->сounterValues->set($valueKey, ['value' => 0]);
+            $сounterValue['value'] = 0;
         } else {
-            $this->сounterValues->set($valueKey, ['value' => $value['value'] + $data['value']]);
+            $сounterValue['value'] += $data['value'];
         }
 
-        $this->сounters->set($metaKey, $metaKeyValue);
+        $this->сounterValues->set($valueKeyHash, $сounterValue);
+        $this->сounters->set($metaKeyHash, $metaKeyValue);
     }
 
     /**
@@ -211,7 +236,7 @@ class OctaneCache implements Adapter
     {
         $histograms = [];
         foreach ($this->histograms as $histogram) {
-            $metaData = json_decode($histogram['meta']);
+            $metaData = json_decode($histogram['meta'], true);
             $data = [
                 'name' => $metaData['name'],
                 'help' => $metaData['help'],
@@ -225,11 +250,10 @@ class OctaneCache implements Adapter
 
             $histogramBuckets = [];
             foreach (explode('::', $histogram['valueKeys']) as $valueKey) {
-                $parts = explode(':', $valueKey);
-
+                $value = $this->histogramValues->get($valueKey);
+                $parts = explode(':', $value['key']);
                 $labelValues = $parts[2];
                 $bucket = $parts[3];
-                $value = $this->histogramValues->get($valueKey);
                 // Key by labelValues
                 $histogramBuckets[$labelValues][$bucket] = $value;
             }
@@ -290,7 +314,7 @@ class OctaneCache implements Adapter
         $math = new Math();
         $summaries = [];
         foreach ($this->summaries as $metaKey => $summary) {
-            $metaData = json_decode($summary['meta']);
+            $metaData = json_decode($summary['meta'], true);
             $data = [
                 'name' => $metaData['name'],
                 'help' => $metaData['help'],
@@ -303,11 +327,11 @@ class OctaneCache implements Adapter
 
             foreach (explode('::', $summary['valueKeys']) as $valueKey) {
 
-                $parts = explode(':', $valueKey);
+                $summaryValue = $this->summaryValues->get($valueKey);
+                $parts = explode(':', $summaryValue['key']);
                 $labelValues = $parts[2];
                 $decodedLabelValues = $this->decodeLabelValues($labelValues);
 
-                $summaryValue = $this->summaryValues->get($valueKey);
                 $sampleTimes = explode('::', $summaryValue['sampleTimes']);
                 $values = Arr::mapWithKeys(
                     explode('::', $summaryValue['sampleValues']),
@@ -375,7 +399,7 @@ class OctaneCache implements Adapter
     {
         $result = [];
         foreach ($this->gauges as $key => $metric) {
-            $metaData = json_decode($metric['meta']);
+            $metaData = json_decode($metric['meta'], true);
             $data = [
                 'name' => $metaData['name'],
                 'help' => $metaData['help'],
@@ -385,7 +409,7 @@ class OctaneCache implements Adapter
             ];
             foreach (explode('::', $metric['valueKeys']) as $valueKey) {
                 $value = $this->gaugeValues->get($valueKey, 'value');
-                $parts = explode(':', $valueKey);
+                $parts = explode(':', $value['key']);
                 $labelValues = $parts[2];
                 $data['samples'][] = [
                     'name' => $metaData['name'],
@@ -412,7 +436,7 @@ class OctaneCache implements Adapter
     {
         $result = [];
         foreach ($this->сounters as $key => $metric) {
-            $metaData = json_decode($metric['meta']);
+            $metaData = json_decode($metric['meta'], true);
             $data = [
                 'name' => $metaData['name'],
                 'help' => $metaData['help'],
@@ -422,7 +446,7 @@ class OctaneCache implements Adapter
             ];
             foreach (explode('::', $metric['valueKeys']) as $valueKey) {
                 $value = $this->сounterValues->get($valueKey, 'value');
-                $parts = explode(':', $valueKey);
+                $parts = explode(':', $value['key']);
                 $labelValues = $parts[2];
                 $data['samples'][] = [
                     'name' => $metaData['name'],
@@ -481,13 +505,13 @@ class OctaneCache implements Adapter
      */
     private function valueKey(array $data): string
     {
-        return hash('md5', implode(':', [
+        return implode(':', [
             $this->prometheusPrefix,
             $data['type'],
             $data['name'],
             $this->encodeLabelValues($data['labelValues']),
             'value',
-        ]));
+        ]);
     }
 
     /**
@@ -509,12 +533,12 @@ class OctaneCache implements Adapter
     */
     protected function metaKey(array $data): string
     {
-        return hash('md5', implode(':', [
+        return implode(':', [
             $this->prometheusPrefix,
             $data['type'],
             $data['name'],
             'meta',
-        ]));
+        ]);
     }
 
     /**
