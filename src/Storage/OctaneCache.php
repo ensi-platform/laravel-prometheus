@@ -520,10 +520,10 @@ class OctaneCache implements Adapter
      */
     private function implodeKeysString(string $keys, string $key): string
     {
-        return implode('::', [
+        return $keys ? implode('::', [
             $keys,
             $key,
-        ]);
+        ]) : $key;
     }
 
     /**
