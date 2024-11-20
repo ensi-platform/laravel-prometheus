@@ -421,7 +421,7 @@ class OctaneCache implements Adapter
 
             $result[] = new MetricFamilySamples($data);
 
-            $this->сounters->del($key);
+            $this->gauges->del($key);
         }
 
         return $result;
