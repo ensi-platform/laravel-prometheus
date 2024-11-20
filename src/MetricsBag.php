@@ -181,7 +181,7 @@ class MetricsBag
             case array_key_exists('memory', $this->config):
                 return new InMemory();
             case array_key_exists('octane-cache', $this->config):
-                return new OctaneCache($this->config['octane-cache']['prefix']);
+                return new OctaneCache();
             case array_key_exists('null-storage', $this->config):
                 return new NullStorage();
         }

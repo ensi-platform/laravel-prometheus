@@ -27,7 +27,6 @@ return [
 //            ],
 //            or
 //            'octane-cache' => [
-//                'prefix' => 'metrics'
 //            ],
             'label_middlewares' => [
                 // \Ensi\LaravelPrometheus\LabelMiddlewares\AppNameLabelMiddleware::class,

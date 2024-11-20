@@ -15,8 +15,6 @@ use Swoole\Table;
 
 class OctaneCache implements Adapter
 {
-    public const PROMETHEUS_PREFIX = 'PROMETHEUS_';
-
     private Table $gauges;
     private Table $gaugeValues;
 
@@ -33,7 +31,7 @@ class OctaneCache implements Adapter
      * Redis constructor.
      * @param mixed[] $options
      */
-    public function __construct(private string $prometheusPrefix = self::PROMETHEUS_PREFIX)
+    public function __construct()
     {
         $this->gauges = Octane::table('gauges');
         $this->gaugeValues = Octane::table('gauge_values');
@@ -506,7 +504,6 @@ class OctaneCache implements Adapter
     private function valueKey(array $data): string
     {
         return implode(':', [
-            $this->prometheusPrefix,
             $data['type'],
             $data['name'],
             $this->encodeLabelValues($data['labelValues']),
@@ -534,7 +531,6 @@ class OctaneCache implements Adapter
     protected function metaKey(array $data): string
     {
         return implode(':', [
-            $this->prometheusPrefix,
             $data['type'],
             $data['name'],
             'meta',
