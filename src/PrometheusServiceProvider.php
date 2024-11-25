@@ -11,7 +11,7 @@ class PrometheusServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/prometheus.php', 'prometheus');
-        if (array_key_exists('octane-cache', config('prometheus.bags'))) {
+        if (array_key_exists('octane-cache', config('prometheus.bags.'.config('prometheus.default_bag')))) {
             $this->mergeConfigFrom(__DIR__ . '/../config/octane.php', 'octane');
         }
 
