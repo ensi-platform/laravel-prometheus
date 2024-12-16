@@ -18,26 +18,26 @@ return [
             'meta' => 'string:10000',
             'valueKeys' => 'string:10000',
         ],
-        'gauge_values:100000' => [
+        'gauge_values:10000' => [
             'value' => 'float',
-            'key' => 'string:100000',
+            'key' => 'string:10000',
         ],
         
         'сounters:1000' => [
             'meta' => 'string:10000',
             'valueKeys' => 'string:10000',
         ],
-        'сounter_values:100000' => [
+        'сounter_values:10000' => [
             'value' => 'float',
-            'key' => 'string:100000',
+            'key' => 'string:10000',
         ],
 
         'summaries:1000' => [
             'meta' => 'string:10000',
             'valueKeys' => 'string:10000',
         ],
-        'summary_values:100000' => [
-            'key' => 'string:100000',
+        'summary_values:10000' => [
+            'key' => 'string:10000',
             'sampleTimes' => 'string:10000',
             'sampleValues' => 'string:10000',
         ],
@@ -46,9 +46,9 @@ return [
             'meta' => 'string:10000',
             'valueKeys' => 'string:10000',
         ],
-        'histogram_values:100000' => [
+        'histogram_values:10000' => [
             'value' => 'float',
-            'key' => 'string:100000',
+            'key' => 'string:10000',
         ],
     ],
 ];
