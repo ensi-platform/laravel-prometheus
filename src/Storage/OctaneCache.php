@@ -253,7 +253,7 @@ class OctaneCache implements Adapter
                 $labelValues = $parts[2];
                 $bucket = $parts[3];
                 // Key by labelValues
-                $histogramBuckets[$labelValues][$bucket] = $value;
+                $histogramBuckets[$labelValues][$bucket] = $value['value'];
             }
 
             // Compute all buckets
