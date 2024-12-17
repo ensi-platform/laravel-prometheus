@@ -129,7 +129,7 @@ class OctaneCache implements Adapter
         $valueKey = $this->valueKey($data);
         $valueKeyHash = hash('md5', $valueKey);
 
-        $metaKeyValue = $this->gauges->get($metaKeyHash);
+        $metaKeyValue = $this->summaries->get($metaKeyHash);
         if (!$metaKeyValue) {
             $metaKeyValue = [
                 'meta' => $this->metaData($data),
