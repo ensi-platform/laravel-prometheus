@@ -115,7 +115,7 @@ class OctaneCache implements Adapter
         $bucketValue['value'] += 1;
         $this->histogramValues->set($bucketKeyHash, $bucketValue);
 
-        $this->summaries->set($metaKeyHash, $metaKeyValue);
+        $this->histograms->set($metaKeyHash, $metaKeyValue);
     }
 
     /**
