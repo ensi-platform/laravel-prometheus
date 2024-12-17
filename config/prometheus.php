@@ -25,6 +25,9 @@ return [
 //            'apcu' => [
 //                'prefix' => 'metrics'
 //            ],
+//            or
+//            'octane-cache' => [
+//            ],
             'label_middlewares' => [
                 // \Ensi\LaravelPrometheus\LabelMiddlewares\AppNameLabelMiddleware::class,
             ],
