@@ -22,11 +22,12 @@ php artisan vendor:publish --provider="Ensi\LaravelPrometheus\PrometheusServiceP
 
 ## Version Compatibility
 
-| Laravel Prometheus | Laravel                    | PHP  |
-|--------------------|----------------------------|------|
-| ^1.0.0             | ^9.x                       | ^8.1 |
-| ^1.0.4             | ^9.x \|\| ^10.x            | ^8.1 |
-| ^1.0.9             | ^9.x \|\| ^10.x \|\| ^11.x | ^8.1 |
+| Laravel Prometheus | Laravel                                | PHP  |
+|--------------------|----------------------------------------|------|
+| ^1.0.0             | ^9.x                                   | ^8.1 |
+| ^1.0.4             | ^9.x \|\| ^10.x                        | ^8.1 |
+| ^1.0.9             | ^9.x \|\| ^10.x \|\| ^11.x             | ^8.1 |
+| ^1.1.0             | ^9.x \|\| ^10.x \|\| ^11.x  \|\| ^12.x | ^8.1 |
 
 ## Basic Usage
 
