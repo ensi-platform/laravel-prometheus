@@ -28,7 +28,7 @@ php artisan vendor:publish --provider="Ensi\LaravelPrometheus\PrometheusServiceP
 | ^1.0.4             | ^9.x \|\| ^10.x                                  | ^8.1 |
 | ^1.0.9             | ^9.x \|\| ^10.x \|\| ^11.x                       | ^8.1 |
 | ^1.1.0             | ^9.x \|\| ^10.x \|\| ^11.x  \|\| ^12.x           | ^8.1 |
-| ^1.1.1             | ^9.x \|\| ^10.x \|\| ^11.x \|\| ^12.x \|\| ^13.x | ^8.1 |
+| ^1.1.1             | ^12.x \|\| ^13.x                                 | ^8.2 |
 
 ## Basic Usage
 
